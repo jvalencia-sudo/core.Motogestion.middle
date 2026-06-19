@@ -1,0 +1,63 @@
+{
+  "dictionaries": ["es-es"],
+  "dictionaryDefinitions": [
+    {
+      "name": "es-es",
+      "path": "./node_modules/@cspell/dict-es-es/Spanish.trie.gz"
+    }
+  ],
+  "ignorePaths": [
+    ".circleci",
+    ".idea",
+    "pnpm-lock.yaml",
+    "package.json",
+    "**/*.svg",
+    ".eslintrc.yml",
+    ".gitignore",
+    "./src/reportWebVitals.ts"
+  ],
+  "ignoreWords": [],
+  "import": [],
+  "version": "0.2",
+  "words": [
+    "nums",
+    "Elipssis",
+    "sonarlint",
+    "allius",
+    "antd",
+    "Antd",
+    "arrowdown",
+    "arrowup",
+    "buildx",
+    "clsx",
+    "Ctcs",
+    "EDITMSG",
+    "flowbite",
+    "hoverable",
+    "iluma",
+    "isotipo",
+    "Listgroup",
+    "lucide",
+    "mixpanel",
+    "moserrat",
+    "nextjs",
+    "nuquote",
+    "onepremex",
+    "Popconfirm",
+    "premex",
+    "qube",
+    "Sider",
+    "sonarqube",
+    "sonarsource",
+    "tanstack",
+    "webp",
+    "Ctcs",
+    "lucide",
+    "Sider",
+    "Popconfirm",
+    "packagings",
+    "incoterm",
+    "incoterms",
+    "cmdk"
+  ]
+}

@@ -1,0 +1,74 @@
+"use client";
+
+import { Moto } from "@/lib/types/moto";
+import { Button } from "@/components/ui/button";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import Link from "next/link";
+import { eliminarMoto } from "./actions";
+import { useState } from "react";
+
+interface ActionsCellProps {
+  moto: Moto;
+}
+
+export function ActionsCell({ moto }: ActionsCellProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (
+      confirm(
+        `¿Estás seguro de eliminar la moto "${moto.placaMot}" (${moto.marca})?`
+      )
+    ) {
+      setIsDeleting(true);
+      try {
+        const resp = await eliminarMoto(moto.placaMot);
+        if (!resp.error) {
+          window.location.reload();
+        }
+      } finally {
+        setIsDeleting(false);
+      }
+    }
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">Abrir menú</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link
+            href={`/motos/editar?placa=${moto.placaMot}`}
+            className="flex items-center cursor-pointer"
+          >
+            <Pencil className="mr-2 h-4 w-4" />
+            Editar
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="flex items-center text-destructive cursor-pointer"
+          onClick={handleDelete}
+          disabled={isDeleting}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          {isDeleting ? "Eliminando..." : "Eliminar"}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

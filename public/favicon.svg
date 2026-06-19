@@ -1,0 +1,142 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <!-- Gradientes -->
+        <linearGradient id="bikeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#f0f0f0;stop-opacity:1" />
+            <stop offset="50%" style="stop-color:#e0e0e0;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#c0c0c0;stop-opacity:1" />
+        </linearGradient>
+
+        <radialGradient id="wheelGradient" cx="50%" cy="30%" r="70%">
+            <stop offset="0%" style="stop-color:#888;stop-opacity:1" />
+            <stop offset="70%" style="stop-color:#444;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#222;stop-opacity:1" />
+        </radialGradient>
+
+        <linearGradient id="seatGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#d4af37;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#b8941f;stop-opacity:1" />
+        </linearGradient>
+
+        <radialGradient id="headlightGradient" cx="30%" cy="30%" r="70%">
+            <stop offset="0%" style="stop-color:#ffffcc;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#ffff99;stop-opacity:1" />
+        </radialGradient>
+
+        <!-- Filtros para efectos -->
+        <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+        </filter>
+
+        <filter id="innerShadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+            <feOffset dx="1" dy="1" result="offset"/>
+            <feComposite in="SourceGraphic" in2="offset" operator="over"/>
+        </filter>
+    </defs>
+
+    <!-- Fondo circular con gradiente -->
+    <circle cx="100" cy="100" r="95" fill="url(#bikeGradient)" opacity="0.1"/>
+    <circle cx="100" cy="100" r="95" fill="none" stroke="#333" stroke-width="2"/>
+
+    <!-- Sombra base de la moto -->
+    <ellipse cx="100" cy="160" rx="80" ry="8" fill="#000" opacity="0.2"/>
+
+    <!-- RUEDA TRASERA -->
+    <g filter="url(#shadow)">
+        <!-- Llanta exterior -->
+        <circle cx="45" cy="150" r="25" fill="url(#wheelGradient)" stroke="#333" stroke-width="2"/>
+        <!-- Rayos -->
+        <g stroke="#666" stroke-width="1.5" opacity="0.8">
+            <line x1="20" y1="150" x2="70" y2="150"/>
+            <line x1="45" y1="125" x2="45" y2="175"/>
+            <line x1="27.3" y1="132.3" x2="62.7" y2="167.7"/>
+            <line x1="27.3" y1="167.7" x2="62.7" y2="132.3"/>
+        </g>
+        <!-- Cubo central -->
+        <circle cx="45" cy="150" r="8" fill="#555"/>
+        <circle cx="45" cy="150" r="4" fill="#777"/>
+    </g>
+
+    <!-- RUEDA DELANTERA -->
+    <g filter="url(#shadow)">
+        <!-- Llanta exterior -->
+        <circle cx="155" cy="150" r="25" fill="url(#wheelGradient)" stroke="#333" stroke-width="2"/>
+        <!-- Rayos -->
+        <g stroke="#666" stroke-width="1.5" opacity="0.8">
+            <line x1="130" y1="150" x2="180" y2="150"/>
+            <line x1="155" y1="125" x2="155" y2="175"/>
+            <line x1="137.3" y1="132.3" x2="172.7" y2="167.7"/>
+            <line x1="137.3" y1="167.7" x2="172.7" y2="132.3"/>
+        </g>
+        <!-- Cubo central -->
+        <circle cx="155" cy="150" r="8" fill="#555"/>
+        <circle cx="155" cy="150" r="4" fill="#777"/>
+    </g>
+
+    <!-- CHASIS PRINCIPAL -->
+    <g stroke="url(#bikeGradient)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#shadow)">
+        <!-- Marco inferior -->
+        <path d="M 45 150 L 70 130 L 110 125 L 140 135 L 155 150"/>
+        <!-- Marco superior -->
+        <path d="M 70 130 L 85 105 L 120 100 L 145 115"/>
+        <!-- Tubo de dirección -->
+        <path d="M 145 115 L 155 95"/>
+        <!-- Soporte trasero -->
+        <path d="M 70 130 L 60 115 L 50 120"/>
+    </g>
+
+    <!-- TANQUE DE COMBUSTIBLE -->
+    <ellipse cx="105" cy="115" rx="20" ry="12" fill="#4a90e2" stroke="#2c5aa0" stroke-width="2" filter="url(#innerShadow)"/>
+    <ellipse cx="105" cy="115" rx="15" ry="8" fill="#5ba0f2" opacity="0.7"/>
+
+    <!-- ASIENTO -->
+    <ellipse cx="85" cy="108" rx="18" ry="6" fill="url(#seatGradient)" stroke="#996633" stroke-width="1" filter="url(#shadow)"/>
+    <ellipse cx="85" cy="108" rx="12" ry="4" fill="#e6c547" opacity="0.8"/>
+
+    <!-- MOTOR -->
+    <rect x="75" y="125" width="25" height="15" rx="3" fill="#666" stroke="#444" stroke-width="1" filter="url(#shadow)"/>
+    <rect x="78" y="128" width="19" height="9" rx="2" fill="#777"/>
+
+    <!-- MANILLAR -->
+    <g stroke="#ddd" stroke-width="4" stroke-linecap="round" filter="url(#shadow)">
+        <line x1="155" y1="95" x2="170" y2="88"/>
+        <!-- Puños -->
+        <circle cx="170" cy="88" r="3" fill="#333"/>
+        <circle cx="155" cy="95" r="3" fill="#333"/>
+    </g>
+
+    <!-- FAROL DELANTERO -->
+    <g filter="url(#shadow)">
+        <circle cx="165" cy="105" r="8" fill="url(#headlightGradient)" stroke="#ccc" stroke-width="1"/>
+        <circle cx="165" cy="105" r="5" fill="#ffffdd"/>
+        <circle cx="167" cy="103" r="2" fill="#fff" opacity="0.8"/>
+    </g>
+
+    <!-- ESCAPE -->
+    <g stroke="#888" stroke-width="4" stroke-linecap="round" fill="none" filter="url(#shadow)">
+        <path d="M 85 140 Q 75 155 50 165"/>
+        <circle cx="50" cy="165" r="3" fill="#666"/>
+        <ellipse cx="48" cy="165" rx="2" ry="1" fill="#444"/>
+    </g>
+
+    <!-- RETROVISORES -->
+    <g stroke="#bbb" stroke-width="2" stroke-linecap="round">
+        <line x1="160" y1="92" x2="165" y2="85"/>
+        <line x1="165" y1="92" x2="170" y2="85"/>
+        <ellipse cx="165" cy="83" rx="3" ry="2" fill="#eee" stroke="#ccc" stroke-width="1"/>
+        <ellipse cx="170" cy="83" rx="3" ry="2" fill="#eee" stroke="#ccc" stroke-width="1"/>
+    </g>
+
+    <!-- DETALLES ADICIONALES -->
+    <!-- Pedales -->
+    <rect x="38" y="145" width="8" height="4" rx="1" fill="#555"/>
+    <rect x="148" y="145" width="8" height="4" rx="1" fill="#555"/>
+
+    <!-- Indicadores -->
+    <circle cx="75" cy="110" r="2" fill="#ff6600" opacity="0.8"/>
+    <circle cx="125" cy="110" r="2" fill="#ff6600" opacity="0.8"/>
+
+    <!-- Logo/emblema en el tanque -->
+    <text x="105" y="118" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#fff" opacity="0.8">MOTO</text>
+</svg>
