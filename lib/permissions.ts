@@ -1,125 +1,58 @@
 import "server-only";
 
-export const
-    PERMISSIONS = [
-  {
-    path: "/clients$",
-    permissions: ["ae:delete:me"],
-  },
-      {
-        path: "/roles",
-        permissions: ["rol:ver"],
-      },
-      {
-        path: "/vistas",
-        permissions: ["rol:ver"],
-      },
-      {
-        path: "/users",
-        permissions: ["rol:ver"],
-      },
-      {
-        path: "/users/crear",
-        permissions: ["rol:ver"],
-      },
-      {
-        path: "/users/editar",
-        permissions: ["rol:ver"],
-      },
-      {
-        path: "/users/resetear-contrasena",
-        permissions: ["rol:ver"],
-      },
-  {
-    path: "/productos/crear$",
-    permissions: ["Ver Productos"],
-  },
-  {
-    path: "/productos/editar$",
-    permissions: ["Ver Productos"],
-  },
-  {
-    path: "/productos$",
-    permissions: ["Ver Productos"],
-  },
-  {
-    path: "/clientes/crear$",
-    permissions: ["Ver Clientes"],
-  },
-  {
-    path: "/clientes/editar$",
-    permissions: ["Ver Clientes"],
-  },
-  {
-    path: "/clientes$",
-    permissions: ["Ver Clientes"],
-  },
-  {
-    path: "/marcas/crear$",
-    permissions: ["Acceso Denegado"],
-  },
-  {
-    path: "/marcas/editar$",
-    permissions: ["Acceso Denegado"],
-  },
-  {
-    path: "/marcas$",
-    permissions: ["Acceso Denegado"],
-  },
-  {
-    path: "/motos/crear$",
-    permissions: ["Ver Motos"],
-  },
-  {
-    path: "/motos/editar$",
-    permissions: ["Ver Motos"],
-  },
-  {
-    path: "/motos$",
-    permissions: ["Ver Motos"],
-  },
-  {
-    path: "/ordenes-trabajo/crear$",
-    permissions: ["Ver Productos"],
-  },
-  {
-    path: "/ordenes-trabajo/editar$",
-    permissions: ["Ver Productos"],
-  },
-  {
-    path: "/ordenes-trabajo/ver$",
-    permissions: ["Ver Productos"],
-  },
-  {
-    path: "/ordenes-trabajo$",
-    permissions: ["Ver Productos"],
-  },
-  {
-    path: "/clients/create$",
-    permissions: ["ae:delete:me"],
-  },
-  {
-    path: "/clients/[0-9-a-z-A-Z]*$",
-    permissions: ["ae:delete:me"],
-  },
-  {
-    path: "/orders$",
-    permissions: ["ae:delete:me"],
-  },
-  {
-    path: "/orders/[0-9-a-z-A-Z]*$",
-    permissions: ["ae:delete:me"],
-  },
-  {
-    path: "/orders/completed$",
-    permissions: ["ae:delete:me"],
-  },
-  {
-    path: "/operations$",
-    permissions: ["ae:delete:me"],
-  },
-  {
-    path: "/operations/create$",
-    permissions: ["ae:delete:me"],
-  },
+// Los permisos los entrega el backend (tabla perfiles_permisos) con el formato
+// "accion:recurso" (ej. leer:clientes, crear:motos). El middleware compara la ruta
+// con estas reglas y exige que el usuario tenga al menos uno de los permisos listados.
+// Las rutas más específicas (crear/editar/ver) van primero.
+export const PERMISSIONS = [
+  // Clientes
+  { path: "/clientes/crear$", permissions: ["crear:clientes"] },
+  { path: "/clientes/editar$", permissions: ["actualizar:clientes"] },
+  { path: "/clientes$", permissions: ["leer:clientes"] },
+
+  // Productos
+  { path: "/productos/crear$", permissions: ["crear:productos"] },
+  { path: "/productos/editar$", permissions: ["actualizar:productos"] },
+  { path: "/productos$", permissions: ["leer:productos"] },
+
+  // Marcas
+  { path: "/marcas/crear$", permissions: ["crear:marcas"] },
+  { path: "/marcas/editar$", permissions: ["actualizar:marcas"] },
+  { path: "/marcas$", permissions: ["leer:marcas"] },
+
+  // Motos
+  { path: "/motos/crear$", permissions: ["crear:motos"] },
+  { path: "/motos/editar$", permissions: ["actualizar:motos"] },
+  { path: "/motos$", permissions: ["leer:motos"] },
+
+  // Agenda (módulo de diseño — gateado con permiso de órdenes de trabajo)
+  { path: "/agenda$", permissions: ["leer:ordenes-trabajo"] },
+
+  // Órdenes de trabajo
+  { path: "/ordenes-trabajo/crear$", permissions: ["crear:ordenes-trabajo"] },
+  { path: "/ordenes-trabajo/editar$", permissions: ["actualizar:ordenes-trabajo"] },
+  { path: "/ordenes-trabajo/ver$", permissions: ["leer:ordenes-trabajo"] },
+  { path: "/ordenes-trabajo$", permissions: ["leer:ordenes-trabajo"] },
+
+  // Roles
+  { path: "/roles/crear$", permissions: ["crear:roles"] },
+  { path: "/roles/editar$", permissions: ["actualizar:roles"] },
+  { path: "/roles$", permissions: ["leer:roles"] },
+
+  // Vistas
+  { path: "/vistas/crear$", permissions: ["crear:vistas"] },
+  { path: "/vistas$", permissions: ["leer:vistas"] },
+
+  // Usuarios
+  { path: "/users/crear$", permissions: ["crear:users"] },
+  { path: "/users/editar$", permissions: ["actualizar:users"] },
+  { path: "/users/resetear-contrasena$", permissions: ["actualizar:users"] },
+  { path: "/users$", permissions: ["leer:users"] },
+
+  // Dominio legado en inglés (por si el menú aún enlaza)
+  { path: "/operations/create$", permissions: ["crear:operations"] },
+  { path: "/operations$", permissions: ["leer:operations"] },
+  { path: "/orders/completed$", permissions: ["leer:orders"] },
+  { path: "/orders/.+$", permissions: ["leer:orders"] },
+  { path: "/orders$", permissions: ["leer:orders"] },
 ];
