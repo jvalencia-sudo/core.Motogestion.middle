@@ -12,7 +12,9 @@ export async function middleware(request: NextRequest) {
 
   // Rewrite all API requests to the backend
   if (request.nextUrl.pathname.includes("/api")) {
-    const url = request.url.replace(process.env.APP_BASE_URL as never, "");
+    // Usar path + query (robusto detrás de cualquier proxy; antes se hacía
+    // request.url.replace(APP_BASE_URL,"") que falla si el proxy entrega http interno).
+    const url = request.nextUrl.pathname + request.nextUrl.search;
 
     const session = await auth0.getSession();
     if (session) {

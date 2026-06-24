@@ -1,0 +1,41 @@
+# Front MotoGestion en el VPS (motogestion.miclickderecho.com).
+# Se engancha a la red de Traefik (root_default) igual que el back.
+#   cd /root/motogestion-front && docker compose -f docker-compose.vps.yml up -d --build
+# Requiere /root/motogestion-front/.env con los valores de producción.
+
+services:
+  motogestion-front:
+    build: .
+    image: motogestion-front:latest
+    container_name: motogestion-front
+    restart: always
+    env_file: .env
+    # El front hace llamadas server-side a su propio dominio (https) que pasa por
+    # Traefik; mientras Let's Encrypt no emita el cert de motogestion (DNS propagando),
+    # Traefik sirve uno self-signed. Esto permite aceptarlo en el loopback interno.
+    # Se puede quitar cuando el cert público ya esté emitido.
+    environment:
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
+    networks:
+      - root_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.motogestion-front.rule=Host(`motogestion.miclickderecho.com`)"
+      - "traefik.http.routers.motogestion-front.entrypoints=websecure"
+      - "traefik.http.routers.motogestion-front.tls.certresolver=mytlschallenge"
+      - "traefik.http.services.motogestion-front.loadbalancer.server.port=3000"
+      - "traefik.http.middlewares.motogestion-front-sec.headers.STSSeconds=31536000"
+      - "traefik.http.middlewares.motogestion-front-sec.headers.STSIncludeSubdomains=true"
+      - "traefik.http.middlewares.motogestion-front-sec.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.motogestion-front-sec.headers.browserXSSFilter=true"
+      - "traefik.http.routers.motogestion-front.middlewares=motogestion-front-sec@docker"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/',{redirect:'manual'}).then(()=>process.exit(0)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+networks:
+  root_default:
+    external: true

@@ -1,0 +1,12 @@
+# OJO: NO excluimos .env aquí — el build de Next lo necesita (Auth0/NEXT_PUBLIC_*).
+# La imagen final es multi-stage (standalone) y NO copia el .env, así que no se filtra.
+node_modules
+.next
+.git
+.github
+.vscode
+.idea
+*.log
+Dockerfile
+.dockerignore
+docker-compose*.yml
