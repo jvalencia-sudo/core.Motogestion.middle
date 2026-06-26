@@ -36,6 +36,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Página informativa para usuarios autenticados pero NO registrados en el sistema
+  if (request.nextUrl.pathname === "/no-registrado") {
+    return NextResponse.next();
+  }
+
   // Redirect to login if there is no session
   const session = await auth0.getSession();
   if (!session) {
@@ -78,6 +83,18 @@ export async function middleware(request: NextRequest) {
           path: "/",
           secure: true,
         });
+
+        if (user.nombreTal) {
+          cookiesStore.set({
+            name: "taller",
+            value: user.nombreTal,
+            httpOnly: true,
+            path: "/",
+          });
+        }
+      } else if (resp.status === 403) {
+        // El backend no reconoce al usuario (correo no registrado en el sistema)
+        return NextResponse.redirect(new URL("/no-registrado", request.url));
       } else {
         return NextResponse.redirect(new URL("/auth/logout", request.url));
       }
@@ -122,6 +139,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
      */
-    "/((?!_next/static|_next/image|favicon.ico|images|sitemap.xml|robots.txt|quotation).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icon.svg|images|sitemap.xml|robots.txt|quotation).*)",
   ],
 };

@@ -12,9 +12,15 @@ export async function getPermissions(): Promise<string[]> {
   return [];
 }
 
+export async function getTallerName(): Promise<string | null> {
+  const store = await cookies();
+  return store.get("taller")?.value ?? null;
+}
+
 export async function logout() {
   const store = await cookies();
   store.delete("permissions");
   store.delete("logged");
+  store.delete("taller");
   redirect("/auth/logout");
 }

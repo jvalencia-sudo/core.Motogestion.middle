@@ -49,14 +49,16 @@ function getItem(
 //TODO: Add active state
 function getMenu(permissions: string[]): NavItem[] {
   const menu = [
-    getItem(permissions, "Administrador", "rol:ver", "", Cpu, [
-      getItem(permissions, "Roles", "rol:ver", "/roles"),
-      getItem(permissions, "Vistas", "rol:ver", "/vistas"),
-      getItem(permissions, "Users", "rol:ver", "/users"),
+    getItem(permissions, "Administrador", "leer:users", "", Cpu, [
+      getItem(permissions, "Usuarios", "leer:users", "/users"),
+      getItem(permissions, "Roles", "leer:roles", "/roles"),
+      getItem(permissions, "Vistas", "leer:vistas", "/vistas"),
+      getItem(permissions, "Perfiles y Permisos", "leer:perfiles-permisos", "/perfiles-permisos"),
     ]),
       getItem(permissions, "Taller", "Ver Productos", "", Package, [
           getItem(permissions, "Productos", "Ver Productos", "/productos"),
           getItem(permissions, "Órdenes de Trabajo", "Ver Órdenes Trabajo", "/ordenes-trabajo"),
+          getItem(permissions, "Reclamos", "leer:reclamos", "/reclamos"),
       ]),
       getItem(permissions, "Gestión de Motos", "Ver Clientes", "", Bike, [
           getItem(permissions, "Clientes", "Ver Clientes", "/clientes"),
