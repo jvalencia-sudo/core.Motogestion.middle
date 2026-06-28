@@ -6,4 +6,5 @@ export type UserWithPermissions = {
   clientId: number | null;
   permissions: string[];
   nombreTal?: string | null;
+  perfil?: string | null;
 };
