@@ -92,6 +92,15 @@ export async function middleware(request: NextRequest) {
             path: "/",
           });
         }
+
+        if (user.perfil) {
+          cookiesStore.set({
+            name: "perfil",
+            value: user.perfil,
+            httpOnly: true,
+            path: "/",
+          });
+        }
       } else if (resp.status === 403) {
         // El backend no reconoce al usuario (correo no registrado en el sistema)
         return NextResponse.redirect(new URL("/no-registrado", request.url));

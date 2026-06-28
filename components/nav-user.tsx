@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useUser } from "@auth0/nextjs-auth0";
 import { ChevronsUpDown, LogOut } from "lucide-react";
 
-import { logout } from "@/app/(main)/actions";
+import { getPerfilName, logout } from "@/app/(main)/actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -23,6 +24,11 @@ import {
 export function NavUser() {
   const { isMobile } = useSidebar();
   const { user, isLoading } = useUser();
+  const [perfil, setPerfil] = useState<string | null>(null);
+
+  useEffect(() => {
+    getPerfilName().then(setPerfil);
+  }, []);
 
   return (
     <SidebarMenu>
@@ -42,7 +48,9 @@ export function NavUser() {
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate text-xs">
+                    {perfil ?? user.email}
+                  </span>
                 </div>
                 <ChevronsUpDown className="ml-auto size-4" />
               </SidebarMenuButton>
@@ -64,6 +72,11 @@ export function NavUser() {
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">{user.name}</span>
                     <span className="truncate text-xs">{user.email}</span>
+                    {perfil && (
+                      <span className="truncate text-xs font-medium text-primary">
+                        {perfil}
+                      </span>
+                    )}
                   </div>
                 </div>
               </DropdownMenuLabel>
