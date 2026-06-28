@@ -1,17 +1,21 @@
-import { getTallerName } from "./actions";
+import { appFetch } from "@/lib/fetch";
+import { ResumenDashboard } from "@/lib/types/dashboard";
+
+import { DashboardResumen } from "./dashboard-resumen";
+import { TallerName } from "./taller-name";
 
 export default async function page() {
-  const taller = await getTallerName();
+  const { data } = await appFetch<ResumenDashboard>("/api/dashboard/resumen");
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden p-8">
-      <h1 className="text-3xl font-bold mb-2">Bienvenido a Moto.Gestión</h1>
-      {taller ? (
-        <p className="text-lg font-medium text-primary mb-1">{taller}</p>
-      ) : null}
-      <p className="text-muted-foreground">
-        Sistema de gestión de taller de motos
-      </p>
+    <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-8">
+      <div>
+        <h1 className="text-3xl font-bold">Bienvenido a Moto.Gestión</h1>
+        <TallerName />
+        <p className="text-muted-foreground">Resumen de tu taller</p>
+      </div>
+
+      <DashboardResumen resumen={data} />
     </div>
   );
 }
