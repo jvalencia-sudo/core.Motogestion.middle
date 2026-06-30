@@ -49,6 +49,17 @@ export const PERMISSIONS = [
   { path: "/users/resetear-contrasena$", permissions: ["actualizar:users"] },
   { path: "/users$", permissions: ["leer:users"] },
 
+  // Perfiles y Permisos (asignar permisos a perfiles)
+  { path: "/perfiles-permisos/crear$", permissions: ["crear:perfiles-permisos"] },
+  { path: "/perfiles-permisos/editar$", permissions: ["actualizar:perfiles-permisos"] },
+  { path: "/perfiles-permisos$", permissions: ["leer:perfiles-permisos"] },
+
+  // Reclamos
+  { path: "/reclamos/crear$", permissions: ["crear:reclamos"] },
+  { path: "/reclamos/editar$", permissions: ["actualizar:reclamos"] },
+  { path: "/reclamos/ver$", permissions: ["leer:reclamos"] },
+  { path: "/reclamos$", permissions: ["leer:reclamos"] },
+
   // Dominio legado en inglés (por si el menú aún enlaza)
   { path: "/operations/create$", permissions: ["crear:operations"] },
   { path: "/operations$", permissions: ["leer:operations"] },

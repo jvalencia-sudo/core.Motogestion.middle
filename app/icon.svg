@@ -1,0 +1,15 @@
+<svg width="410" height="410" viewBox="0 0 410 410" xmlns="http://www.w3.org/2000/svg" style="">
+
+
+<rect width="400" height="400" rx="80" fill="#0f172a" style="fill:rgb(15, 23, 42);stroke:none;color:rgb(11, 11, 11);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+
+<path d="M200 48 L312 98 L312 220 Q312 310 200 352 Q88 310 88 220 L88 98 Z" fill="#f97316" style="fill:rgb(249, 115, 22);stroke:none;color:rgb(11, 11, 11);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+
+<path d="M200 72 L292 114 L292 216 Q292 292 200 328 Q108 292 108 216 L108 114 Z" fill="#1e293b" style="fill:rgb(30, 41, 59);stroke:none;color:rgb(11, 11, 11);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+
+<text x="200" y="262" font-family="Georgia,serif" font-size="148" font-weight="700" fill="#f97316" text-anchor="middle" style="fill:rgb(249, 115, 22);stroke:none;color:rgb(11, 11, 11);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:Georgia, serif;font-size:148px;font-weight:700;text-anchor:middle;dominant-baseline:auto">M</text>
+
+</svg>

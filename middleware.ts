@@ -36,10 +36,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Redirect to login if there is no session
+  // Página informativa para usuarios autenticados pero NO registrados en el sistema
+  if (request.nextUrl.pathname === "/no-registrado") {
+    return NextResponse.next();
+  }
+
+  // Rutas públicas (landing y registro de taller): accesibles sin iniciar sesión.
+  const PUBLIC_PATHS = ["/", "/registro"];
+  if (PUBLIC_PATHS.includes(request.nextUrl.pathname)) {
+    return NextResponse.next();
+  }
+
+  // Redirect to login if there is no session (volviendo luego a la ruta pedida)
   const session = await auth0.getSession();
   if (!session) {
-    return NextResponse.redirect(new URL("/auth/login", request.url));
+    const loginUrl = new URL("/auth/login", request.url);
+    loginUrl.searchParams.set(
+      "returnTo",
+      request.nextUrl.pathname + request.nextUrl.search,
+    );
+    return NextResponse.redirect(loginUrl);
   }
 
   // If the user is logged in but the "logged" cookie is not set, authenticate them
@@ -78,6 +94,27 @@ export async function middleware(request: NextRequest) {
           path: "/",
           secure: true,
         });
+
+        if (user.nombreTal) {
+          cookiesStore.set({
+            name: "taller",
+            value: user.nombreTal,
+            httpOnly: true,
+            path: "/",
+          });
+        }
+
+        if (user.perfil) {
+          cookiesStore.set({
+            name: "perfil",
+            value: user.perfil,
+            httpOnly: true,
+            path: "/",
+          });
+        }
+      } else if (resp.status === 403) {
+        // El backend no reconoce al usuario (correo no registrado en el sistema)
+        return NextResponse.redirect(new URL("/no-registrado", request.url));
       } else {
         return NextResponse.redirect(new URL("/auth/logout", request.url));
       }
@@ -86,11 +123,11 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Check permissions for protected routes
-  if (request.nextUrl.pathname !== "/") {
+  // Check permissions for protected routes (la home del sistema es /inicio y no exige permiso específico)
+  if (request.nextUrl.pathname !== "/inicio") {
     const permissions = request.cookies.get("permissions");
     if (!permissions) {
-      return NextResponse.redirect(new URL("/", request.url), { status: 308 });
+      return NextResponse.redirect(new URL("/inicio", request.url), { status: 308 });
     }
 
     // If there is a valid session, check the permissions
@@ -107,7 +144,7 @@ export async function middleware(request: NextRequest) {
         parsedPermission.includes(p),
       )
     ) {
-      return NextResponse.redirect(new URL("/", request.url), { status: 308 });
+      return NextResponse.redirect(new URL("/inicio", request.url), { status: 308 });
     }
   }
 
@@ -122,6 +159,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
      */
-    "/((?!_next/static|_next/image|favicon.ico|images|sitemap.xml|robots.txt|quotation).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icon.svg|images|sitemap.xml|robots.txt|quotation).*)",
   ],
 };
