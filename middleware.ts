@@ -41,10 +41,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Redirect to login if there is no session
+  // Rutas públicas (landing y registro de taller): accesibles sin iniciar sesión.
+  const PUBLIC_PATHS = ["/", "/registro"];
+  if (PUBLIC_PATHS.includes(request.nextUrl.pathname)) {
+    return NextResponse.next();
+  }
+
+  // Redirect to login if there is no session (volviendo luego a la ruta pedida)
   const session = await auth0.getSession();
   if (!session) {
-    return NextResponse.redirect(new URL("/auth/login", request.url));
+    const loginUrl = new URL("/auth/login", request.url);
+    loginUrl.searchParams.set(
+      "returnTo",
+      request.nextUrl.pathname + request.nextUrl.search,
+    );
+    return NextResponse.redirect(loginUrl);
   }
 
   // If the user is logged in but the "logged" cookie is not set, authenticate them
@@ -112,11 +123,11 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Check permissions for protected routes
-  if (request.nextUrl.pathname !== "/") {
+  // Check permissions for protected routes (la home del sistema es /inicio y no exige permiso específico)
+  if (request.nextUrl.pathname !== "/inicio") {
     const permissions = request.cookies.get("permissions");
     if (!permissions) {
-      return NextResponse.redirect(new URL("/", request.url), { status: 308 });
+      return NextResponse.redirect(new URL("/inicio", request.url), { status: 308 });
     }
 
     // If there is a valid session, check the permissions
@@ -133,7 +144,7 @@ export async function middleware(request: NextRequest) {
         parsedPermission.includes(p),
       )
     ) {
-      return NextResponse.redirect(new URL("/", request.url), { status: 308 });
+      return NextResponse.redirect(new URL("/inicio", request.url), { status: 308 });
     }
   }
 
