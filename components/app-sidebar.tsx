@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Cpu, Package, Bike, Home, CalendarDays } from "lucide-react";
+import { Cpu, Package, Bike, Home } from "lucide-react";
 
 import { getPermissions } from "@/app/(main)/actions";
 import { NavMain } from "@/components/nav-main";
@@ -58,14 +58,12 @@ function getMenu(permissions: string[]): NavItem[] {
       getItem(permissions, "Taller", "Ver Productos", "", Package, [
           getItem(permissions, "Productos", "Ver Productos", "/productos"),
           getItem(permissions, "Órdenes de Trabajo", "Ver Órdenes Trabajo", "/ordenes-trabajo"),
+          getItem(permissions, "Tablero", "leer:ordenes-trabajo", "/tablero"),
           getItem(permissions, "Reclamos", "leer:reclamos", "/reclamos"),
       ]),
       getItem(permissions, "Gestión de Motos", "Ver Clientes", "", Bike, [
           getItem(permissions, "Clientes", "Ver Clientes", "/clientes"),
           getItem(permissions, "Motos", "Ver Motos", "/motos"),
-      ]),
-      getItem(permissions, "Agenda", "leer:ordenes-trabajo", "", CalendarDays, [
-          getItem(permissions, "Citas", "leer:ordenes-trabajo", "/agenda"),
       ]),
   ];
 

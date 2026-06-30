@@ -25,8 +25,8 @@ export const PERMISSIONS = [
   { path: "/motos/editar$", permissions: ["actualizar:motos"] },
   { path: "/motos$", permissions: ["leer:motos"] },
 
-  // Agenda (módulo de diseño — gateado con permiso de órdenes de trabajo)
-  { path: "/agenda$", permissions: ["leer:ordenes-trabajo"] },
+  // Tablero (vista del módulo Taller — gateada con permiso de órdenes de trabajo)
+  { path: "/tablero$", permissions: ["leer:ordenes-trabajo"] },
 
   // Órdenes de trabajo
   { path: "/ordenes-trabajo/crear$", permissions: ["crear:ordenes-trabajo"] },

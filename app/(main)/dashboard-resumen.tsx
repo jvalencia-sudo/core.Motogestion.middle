@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   Bike,
   ClipboardList,
+  LayoutDashboard,
   MessageSquareWarning,
   Package,
   Users,
@@ -60,6 +61,7 @@ function Kpi({
 }
 
 const ACCESOS = [
+  { href: "/tablero", label: "Tablero", icon: <LayoutDashboard className="size-5" /> },
   { href: "/ordenes-trabajo", label: "Órdenes", icon: <ClipboardList className="size-5" /> },
   { href: "/clientes", label: "Clientes", icon: <Users className="size-5" /> },
   { href: "/motos", label: "Motos", icon: <Bike className="size-5" /> },
