@@ -1,8 +1,8 @@
 import { appFetch } from "@/lib/fetch";
 import { ResumenDashboard } from "@/lib/types/dashboard";
 
-import { DashboardResumen } from "./dashboard-resumen";
-import { TallerName } from "./taller-name";
+import { DashboardResumen } from "../dashboard-resumen";
+import { TallerName } from "../taller-name";
 
 export default async function page() {
   const { data } = await appFetch<ResumenDashboard>("/api/dashboard/resumen");
