@@ -154,7 +154,7 @@ export default function LandingPage() {
                 variant="outline"
                 className="border-slate-700 bg-transparent text-slate-200 hover:bg-slate-800 hover:text-white"
               >
-                <Link href="/auth/login?returnTo=/inicio">Ya tengo cuenta</Link>
+                <a href="/auth/login?returnTo=/inicio">Ya tengo cuenta</a>
               </Button>
             </div>
             <div className="flex items-center gap-2 text-sm text-slate-500">
