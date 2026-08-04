@@ -74,15 +74,29 @@ export const columns: ColumnDef<Producto>[] = [
     cell: ({ row }) => <ImpuestosCell impuestos={row.original.impuestos} />,
   },
   {
+    accessorKey: "tipoPro",
+    header: "Tipo",
+    cell: ({ row }) => {
+      const tipo = row.original.tipoPro;
+      const label =
+        tipo === "SERVICIO" ? "Servicio" : tipo === "PAQUETE" ? "Paquete" : "Repuesto";
+      return <Badge variant="secondary">{label}</Badge>;
+    },
+  },
+  {
     accessorKey: "stockPro",
     header: "Stock",
     cell: ({ row }) => {
-      const stock = row.original.stockPro;
-      const stockMin = row.original.stockProMin;
-      const variant = stock === 0 ? "destructive" : stock <= stockMin ? "outline" : "default";
+      const { stockPro: stock, stockProMin: stockMin, tipoPro } = row.original;
+      // SERVICIO/PAQUETE no manejan stock.
+      if (tipoPro !== "BIEN" || stock === null || stock === undefined) {
+        return <span className="text-muted-foreground">—</span>;
+      }
+      const min = stockMin ?? 0;
+      const variant = stock === 0 ? "destructive" : stock <= min ? "outline" : "default";
       return (
         <Badge variant={variant}>
-          {stock} / {stockMin} mín
+          {stock} / {min} mín
         </Badge>
       );
     },

@@ -239,6 +239,7 @@ export async function obtenerProductosSelect(): Promise<ProductoSelect[]> {
       return {
         codPro: producto.codPro,
         nombrePro: producto.nombrePro,
+        tipoPro: producto.tipoPro,
         precioPro: producto.precioPro,
         precioConImpuesto: precioConImpuesto,
         stockPro: producto.stockPro,

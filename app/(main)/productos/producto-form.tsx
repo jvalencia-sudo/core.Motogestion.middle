@@ -12,10 +12,23 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Producto, Impuesto, ImpuestoRequest } from "@/lib/types/producto";
+import { Badge } from "@/components/ui/badge";
+import {
+  Producto,
+  Impuesto,
+  ImpuestoRequest,
+  ComponentePaquete,
+} from "@/lib/types/producto";
 import {
   createProductoSchema,
   updateProductoSchema,
@@ -24,11 +37,21 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { Trash2 } from "lucide-react";
 import { crearProducto, editarProducto } from "./actions";
+
+// Candidato a componente de un paquete (producto BIEN o SERVICIO).
+export interface ProductoCandidato {
+  codPro: number;
+  nombrePro: string;
+  tipoPro: "BIEN" | "SERVICIO" | "PAQUETE";
+}
 
 interface ProductoFormProps {
   producto?: Producto;
   isEdit?: boolean;
+  // Productos disponibles como componentes de un paquete.
+  productosDisponibles?: ProductoCandidato[];
 }
 
 // Impuestos disponibles según la documentación del backend
@@ -39,14 +62,24 @@ const IMPUESTOS_DISPONIBLES: Impuesto[] = [
   { codImp: 4, nombreImp: "ICA", porcentaje: 1.0 },
 ];
 
+const TIPOS_PRODUCTO: { value: "BIEN" | "SERVICIO" | "PAQUETE"; label: string; hint: string }[] = [
+  { value: "BIEN", label: "Producto (repuesto/insumo)", hint: "Maneja stock de inventario." },
+  { value: "SERVICIO", label: "Servicio / Mano de obra", hint: "Se cobra por horas o valor; no maneja stock." },
+  { value: "PAQUETE", label: "Paquete / Combo", hint: "Precio fijo compuesto por otros productos." },
+];
+
 export default function ProductoForm({
   producto,
   isEdit = false,
+  productosDisponibles = [],
 }: ProductoFormProps) {
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [impuestosSeleccionados, setImpuestosSeleccionados] = useState<
     ImpuestoRequest[]
+  >([]);
+  const [componentesSeleccionados, setComponentesSeleccionados] = useState<
+    ComponentePaquete[]
   >([]);
 
   const form = useForm<CreateProductoFormData>({
@@ -54,32 +87,31 @@ export default function ProductoForm({
     defaultValues: {
       nombrePro: producto?.nombrePro || "",
       descripcionPro: producto?.descripcionPro || "",
+      tipoPro: producto?.tipoPro || "BIEN",
       precioPro: producto?.precioPro || 0,
-      stockPro: producto?.stockPro || 0,
-      stockProMin: producto?.stockProMin || 0,
+      stockPro: producto?.stockPro ?? 0,
+      stockProMin: producto?.stockProMin ?? 0,
       impuestos: [],
     },
   });
 
   useEffect(() => {
-    if (producto && producto.impuestos) {
-      // Primero establecer los impuestos seleccionados
-      const impuestosProducto = producto.impuestos.map((imp) => ({
+    if (producto) {
+      const impuestosProducto = (producto.impuestos || []).map((imp) => ({
         codImp: imp.codImp,
         porcentaje: imp.porcentaje,
       }));
-
-      // Establecer los impuestos y resetear el formulario
       setImpuestosSeleccionados(impuestosProducto);
+      setComponentesSeleccionados(producto.componentes || []);
 
-      // Usar setTimeout para asegurar que el estado se actualice antes del reset
       setTimeout(() => {
         form.reset({
           nombrePro: producto.nombrePro,
           descripcionPro: producto.descripcionPro || "",
+          tipoPro: producto.tipoPro,
           precioPro: producto.precioPro,
-          stockPro: producto.stockPro,
-          stockProMin: producto.stockProMin,
+          stockPro: producto.stockPro ?? 0,
+          stockProMin: producto.stockProMin ?? 0,
           impuestos: impuestosProducto,
         });
       }, 0);
@@ -111,85 +143,130 @@ export default function ProductoForm({
     );
   };
 
+  // ---- Componentes de paquete ----
+  const agregarComponente = (codPro: number) => {
+    const prod = productosDisponibles.find((p) => p.codPro === codPro);
+    if (!prod) return;
+    if (componentesSeleccionados.some((c) => c.codProComp === codPro)) return;
+    setComponentesSeleccionados([
+      ...componentesSeleccionados,
+      {
+        codProComp: prod.codPro,
+        nombrePro: prod.nombrePro,
+        tipoPro: prod.tipoPro,
+        cantidadComp: 1,
+      },
+    ]);
+  };
+
+  const quitarComponente = (codProComp: number) => {
+    setComponentesSeleccionados(
+      componentesSeleccionados.filter((c) => c.codProComp !== codProComp)
+    );
+  };
+
+  const actualizarCantidadComponente = (codProComp: number, cantidad: number) => {
+    setComponentesSeleccionados(
+      componentesSeleccionados.map((c) =>
+        c.codProComp === codProComp ? { ...c, cantidadComp: cantidad } : c
+      )
+    );
+  };
+
   const formatearPrecio = (valor: string) => {
-    // Eliminar todo excepto números
     const soloNumeros = valor.replace(/\D/g, "");
-    // Formatear con separadores de miles
     return soloNumeros.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
   const handlePrecioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const valor = e.target.value.replace(/\D/g, ""); // Solo números
+    const valor = e.target.value.replace(/\D/g, "");
     form.setValue("precioPro", Number(valor));
   };
 
   const handleStockChange = (fieldName: "stockPro" | "stockProMin") => (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    // Eliminar todo excepto números
     const valor = e.target.value.replace(/\D/g, "");
     form.setValue(fieldName, Number(valor));
   };
 
   const formatearNumero = (valor: string | number) => {
-    // Convertir a string y eliminar todo excepto números
     const soloNumeros = valor.toString().replace(/\D/g, "");
-    // Si está vacío, retornar "0"
     if (!soloNumeros) return "0";
-    // Eliminar ceros a la izquierda pero mantener al menos un 0
-    const sinCerosIzq = soloNumeros.replace(/^0+/, "") || "0";
-    return sinCerosIzq;
+    return soloNumeros.replace(/^0+/, "") || "0";
   };
+
+  // Tipo actual (para condicionar stock y componentes)
+  const tipoPro = useWatch({ control: form.control, name: "tipoPro", defaultValue: "BIEN" });
+  const esBien = tipoPro === "BIEN";
+  const esPaquete = tipoPro === "PAQUETE";
+
+  // Candidatos: productos BIEN/SERVICIO (no paquetes) que no sean el propio ni ya elegidos.
+  const candidatos = useMemo(
+    () =>
+      productosDisponibles.filter(
+        (p) =>
+          p.tipoPro !== "PAQUETE" &&
+          p.codPro !== producto?.codPro &&
+          !componentesSeleccionados.some((c) => c.codProComp === p.codPro)
+      ),
+    [productosDisponibles, componentesSeleccionados, producto?.codPro]
+  );
 
   async function onSubmit(values: CreateProductoFormData) {
     setLoading(true);
     setError(undefined);
 
     try {
+      if (values.tipoPro === "PAQUETE" && componentesSeleccionados.length === 0) {
+        setError("Un paquete debe tener al menos un componente");
+        setLoading(false);
+        return;
+      }
+
+      const bien = values.tipoPro === "BIEN";
       const data = {
         ...values,
+        stockPro: bien ? values.stockPro : undefined,
+        stockProMin: bien ? values.stockProMin : undefined,
         impuestos: impuestosSeleccionados.length > 0 ? impuestosSeleccionados : undefined,
+        componentes:
+          values.tipoPro === "PAQUETE"
+            ? componentesSeleccionados.map((c) => ({
+                codProComp: c.codProComp,
+                cantidadComp: c.cantidadComp,
+              }))
+            : undefined,
       };
 
       if (isEdit && producto) {
         const resp = await editarProducto(producto.codPro, data);
-
-        if (resp?.error) {
-          setError(resp.error);
-        }
+        if (resp?.error) setError(resp.error);
       } else {
         const resp = await crearProducto(data);
-
         if (resp?.error) {
           setError(resp.error);
         } else {
           form.reset();
           setImpuestosSeleccionados([]);
+          setComponentesSeleccionados([]);
         }
       }
-    } catch (err) {
+    } catch {
       setError("Ocurrió un error inesperado");
     } finally {
       setLoading(false);
     }
   }
 
-  // Usar useWatch para evitar re-renders innecesarios
-  const precioPro = useWatch({
-    control: form.control,
-    name: "precioPro",
-    defaultValue: 0,
-  });
-
-  // Memoizar los cálculos para evitar re-renders
+  const precioPro = useWatch({ control: form.control, name: "precioPro", defaultValue: 0 });
   const precioBase = useMemo(() => Number(precioPro) || 0, [precioPro]);
-
   const totalImpuestos = useMemo(() => {
-    return impuestosSeleccionados.reduce((sum, imp) => {
-      return sum + (precioBase * imp.porcentaje) / 100;
-    }, 0);
+    return impuestosSeleccionados.reduce(
+      (sum, imp) => sum + (precioBase * imp.porcentaje) / 100,
+      0
+    );
   }, [impuestosSeleccionados, precioBase]);
-
   const precioFinal = useMemo(() => precioBase + totalImpuestos, [precioBase, totalImpuestos]);
 
   return (
@@ -210,6 +287,35 @@ export default function ProductoForm({
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                {/* Tipo de producto */}
+                <FormField
+                  control={form.control}
+                  name="tipoPro"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona el tipo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {TIPOS_PRODUCTO.map((t) => (
+                            <SelectItem key={t.value} value={t.value}>
+                              {t.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        {TIPOS_PRODUCTO.find((t) => t.value === field.value)?.hint}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 {/* Nombre */}
                 <FormField
                   control={form.control}
@@ -254,15 +360,24 @@ export default function ProductoForm({
                   )}
                 />
 
-                {/* Fila: Precio y Stock */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Precio */}
+                {/* Precio + Stock (stock solo para BIEN) */}
+                <div
+                  className={`grid grid-cols-1 gap-4 ${
+                    esBien ? "md:grid-cols-3" : "md:grid-cols-1"
+                  }`}
+                >
                   <FormField
                     control={form.control}
                     name="precioPro"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Precio Base *</FormLabel>
+                        <FormLabel>
+                          {esPaquete
+                            ? "Precio del paquete *"
+                            : tipoPro === "SERVICIO"
+                            ? "Valor / tarifa *"
+                            : "Precio Base *"}
+                        </FormLabel>
                         <FormControl>
                           <Input
                             placeholder="0"
@@ -274,66 +389,166 @@ export default function ProductoForm({
                           />
                         </FormControl>
                         <FormDescription className="text-xs">
-                          Precio sin impuestos (COP)
+                          {esPaquete
+                            ? "Precio fijo del combo (COP)"
+                            : tipoPro === "SERVICIO"
+                            ? "Valor por hora/unidad (COP)"
+                            : "Precio sin impuestos (COP)"}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  {/* Stock Actual */}
-                  <FormField
-                    control={form.control}
-                    name="stockPro"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Stock Actual *</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="0"
-                            type="text"
-                            value={formatearNumero(field.value?.toString() || "0")}
-                            onChange={handleStockChange("stockPro")}
-                            onBlur={field.onBlur}
-                            name={field.name}
-                          />
-                        </FormControl>
-                        <FormDescription className="text-xs">
-                          Unidades disponibles
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {esBien && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="stockPro"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Stock Actual *</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="0"
+                                type="text"
+                                value={formatearNumero(field.value?.toString() || "0")}
+                                onChange={handleStockChange("stockPro")}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                              />
+                            </FormControl>
+                            <FormDescription className="text-xs">
+                              Unidades disponibles
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                  {/* Stock Mínimo */}
-                  <FormField
-                    control={form.control}
-                    name="stockProMin"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Stock Mínimo *</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="0"
-                            type="text"
-                            value={formatearNumero(field.value?.toString() || "0")}
-                            onChange={handleStockChange("stockProMin")}
-                            onBlur={field.onBlur}
-                            name={field.name}
-                          />
-                        </FormControl>
-                        <FormDescription className="text-xs">
-                          Alerta de reorden
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                      <FormField
+                        control={form.control}
+                        name="stockProMin"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Stock Mínimo *</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="0"
+                                type="text"
+                                value={formatearNumero(field.value?.toString() || "0")}
+                                onChange={handleStockChange("stockProMin")}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                              />
+                            </FormControl>
+                            <FormDescription className="text-xs">
+                              Alerta de reorden
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  )}
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Componentes del paquete (solo PAQUETE) */}
+          {esPaquete && (
+            <Card className="mb-4">
+              <CardHeader>
+                <CardTitle>Componentes del paquete</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Agrega los productos y servicios incluidos en el combo. El
+                    precio lo define el paquete; el stock de los repuestos se
+                    descuenta automáticamente al usar el combo en una orden.
+                  </p>
+
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1">
+                      <FormLabel className="text-sm">Agregar componente</FormLabel>
+                      <Select
+                        value=""
+                        onValueChange={(v) => agregarComponente(Number(v))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              candidatos.length
+                                ? "Selecciona un producto o servicio"
+                                : "No hay productos disponibles"
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {candidatos.map((p) => (
+                            <SelectItem key={p.codPro} value={p.codPro.toString()}>
+                              {p.nombrePro}
+                              {p.tipoPro === "SERVICIO" ? " (servicio)" : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {componentesSeleccionados.length === 0 ? (
+                    <p className="text-sm text-muted-foreground italic">
+                      Aún no has agregado componentes.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {componentesSeleccionados.map((c) => (
+                        <div
+                          key={c.codProComp}
+                          className="flex items-center gap-3 rounded-md border p-3"
+                        >
+                          <div className="flex-1">
+                            <p className="font-medium">{c.nombrePro}</p>
+                            <Badge variant="secondary" className="mt-1">
+                              {c.tipoPro === "SERVICIO" ? "Servicio" : "Repuesto"}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <FormLabel className="text-xs text-muted-foreground">
+                              Cantidad
+                            </FormLabel>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              className="w-24"
+                              value={c.cantidadComp}
+                              onChange={(e) =>
+                                actualizarCantidadComponente(
+                                  c.codProComp,
+                                  parseFloat(e.target.value) || 0
+                                )
+                              }
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => quitarComponente(c.codProComp)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Impuestos */}
           <Card className="mb-4">
