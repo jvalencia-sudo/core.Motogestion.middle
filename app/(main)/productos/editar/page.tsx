@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import ProductoForm from "@/app/(main)/productos/producto-form";
-import { obtenerProductoPorCodigo } from "@/app/(main)/productos/actions";
+import { obtenerProductoPorCodigo, obtenerImpuestos } from "@/app/(main)/productos/actions";
 import { appFetch } from "@/lib/fetch";
 import { Producto } from "@/lib/types/producto";
 
@@ -21,9 +21,10 @@ export default async function EditarProductoPage({
     notFound();
   }
 
-  const [producto, productos] = await Promise.all([
+  const [producto, productos, impuestos] = await Promise.all([
     obtenerProductoPorCodigo(parseInt(cod)),
     appFetch<Producto[]>("/api/productos"),
+    obtenerImpuestos(),
   ]);
 
   if (!producto) {
@@ -41,6 +42,7 @@ export default async function EditarProductoPage({
       producto={producto}
       isEdit={true}
       productosDisponibles={disponibles}
+      impuestosDisponibles={impuestos}
     />
   );
 }

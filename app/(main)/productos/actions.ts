@@ -3,11 +3,21 @@
 import { appFetch } from "@/lib/fetch";
 import {
   Producto,
+  Impuesto,
   CreateProductoRequest,
   UpdateProductoRequest,
   ProductoOperationResponse,
 } from "@/lib/types/producto";
 import { permanentRedirect } from "next/navigation";
+
+/**
+ * Obtener el catálogo de impuestos del taller
+ * GET /api/impuestos
+ */
+export async function obtenerImpuestos(): Promise<Impuesto[]> {
+  const resp = await appFetch<Impuesto[]>("/api/impuestos");
+  return resp.data || [];
+}
 
 /**
  * Crear un nuevo producto

@@ -57,7 +57,6 @@ function getMenu(permissions: string[]): NavItem[] {
     ]),
       getItem(permissions, "Taller", "Ver Productos", "", Package, [
           getItem(permissions, "Productos", "Ver Productos", "/productos"),
-          getItem(permissions, "Inventario", "leer:productos", "/inventario"),
           getItem(permissions, "Órdenes de Trabajo", "Ver Órdenes Trabajo", "/ordenes-trabajo"),
           getItem(permissions, "Tablero", "leer:ordenes-trabajo", "/tablero"),
           getItem(permissions, "Reclamos", "leer:reclamos", "/reclamos"),
@@ -66,6 +65,7 @@ function getMenu(permissions: string[]): NavItem[] {
       getItem(permissions, "Gestión de Motos", "Ver Clientes", "", Bike, [
           getItem(permissions, "Clientes", "Ver Clientes", "/clientes"),
           getItem(permissions, "Motos", "Ver Motos", "/motos"),
+          getItem(permissions, "Marcas", "Ver Motos", "/marcas"),
       ]),
   ];
 

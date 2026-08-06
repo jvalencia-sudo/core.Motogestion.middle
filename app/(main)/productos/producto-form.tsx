@@ -52,15 +52,9 @@ interface ProductoFormProps {
   isEdit?: boolean;
   // Productos disponibles como componentes de un paquete.
   productosDisponibles?: ProductoCandidato[];
+  // Catálogo de impuestos del taller (viene del backend, no hardcodeado).
+  impuestosDisponibles?: Impuesto[];
 }
-
-// Impuestos disponibles según la documentación del backend
-const IMPUESTOS_DISPONIBLES: Impuesto[] = [
-  { codImp: 1, nombreImp: "IVA", porcentaje: 19.0 },
-  { codImp: 2, nombreImp: "IVA Reducido", porcentaje: 5.0 },
-  { codImp: 3, nombreImp: "Impuesto al Consumo", porcentaje: 8.0 },
-  { codImp: 4, nombreImp: "ICA", porcentaje: 1.0 },
-];
 
 const TIPOS_PRODUCTO: { value: "BIEN" | "SERVICIO" | "PAQUETE"; label: string; hint: string }[] = [
   { value: "BIEN", label: "Producto (repuesto/insumo)", hint: "Maneja stock de inventario." },
@@ -72,6 +66,7 @@ export default function ProductoForm({
   producto,
   isEdit = false,
   productosDisponibles = [],
+  impuestosDisponibles = [],
 }: ProductoFormProps) {
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(false);
@@ -563,7 +558,7 @@ export default function ProductoForm({
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {IMPUESTOS_DISPONIBLES.map((impuesto) => {
+                  {impuestosDisponibles.map((impuesto) => {
                     const seleccionado = impuestosSeleccionados.find(
                       (i) => i.codImp === impuesto.codImp
                     );
@@ -633,7 +628,7 @@ export default function ProductoForm({
                       </span>
                     </div>
                     {impuestosSeleccionados.map((imp) => {
-                      const impInfo = IMPUESTOS_DISPONIBLES.find(
+                      const impInfo = impuestosDisponibles.find(
                         (i) => i.codImp === imp.codImp
                       );
                       const valorImpuesto = (precioBase * imp.porcentaje) / 100;
