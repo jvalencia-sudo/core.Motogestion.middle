@@ -61,6 +61,7 @@ function getMenu(permissions: string[]): NavItem[] {
           getItem(permissions, "Tablero", "leer:ordenes-trabajo", "/tablero"),
           getItem(permissions, "Reclamos", "leer:reclamos", "/reclamos"),
           getItem(permissions, "Configuración", "Ver Productos", "/configuracion"),
+          getItem(permissions, "Planes", "Ver Productos", "/planes"),
       ]),
       getItem(permissions, "Gestión de Motos", "Ver Clientes", "", Bike, [
           getItem(permissions, "Clientes", "Ver Clientes", "/clientes"),
