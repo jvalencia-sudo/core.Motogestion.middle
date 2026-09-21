@@ -32,7 +32,7 @@ export default function PublicLayout({
 
           <div className="flex items-center gap-2">
             <Button asChild variant="ghost" className="hidden text-slate-200 hover:text-white sm:inline-flex">
-              <Link href="/auth/login?returnTo=/inicio">Iniciar sesión</Link>
+              <a href="/auth/login?returnTo=/inicio">Iniciar sesión</a>
             </Button>
             <Button asChild className="bg-orange-500 text-white hover:bg-orange-600">
               <Link href="/registro">Registrar taller</Link>
@@ -54,12 +54,12 @@ export default function PublicLayout({
           <p className="text-sm">
             © {new Date().getFullYear()} MotoGestión. Gestión para talleres de motos.
           </p>
-          <Link
+          <a
             href="/auth/login?returnTo=/inicio"
             className="text-sm text-slate-400 hover:text-white"
           >
             Iniciar sesión
-          </Link>
+          </a>
         </div>
       </footer>
     </div>

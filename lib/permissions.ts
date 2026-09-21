@@ -15,6 +15,9 @@ export const PERMISSIONS = [
   { path: "/productos/editar$", permissions: ["actualizar:productos"] },
   { path: "/productos$", permissions: ["leer:productos"] },
 
+  // Inventario (movimientos, entradas, toma física)
+  { path: "/inventario$", permissions: ["leer:productos"] },
+
   // Marcas
   { path: "/marcas/crear$", permissions: ["crear:marcas"] },
   { path: "/marcas/editar$", permissions: ["actualizar:marcas"] },

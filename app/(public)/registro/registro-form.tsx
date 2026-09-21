@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { BadgeCheck, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -52,7 +51,7 @@ export function RegistroForm() {
             sesión y empieza a gestionar tu taller.
           </p>
           <Button asChild size="lg" className="mt-2 bg-orange-500 text-white hover:bg-orange-600">
-            <Link href="/auth/login?returnTo=/inicio">Iniciar sesión</Link>
+            <a href="/auth/login?returnTo=/inicio">Iniciar sesión</a>
           </Button>
         </CardContent>
       </Card>
@@ -112,12 +111,12 @@ export function RegistroForm() {
 
           <p className="text-center text-sm text-slate-400">
             ¿Ya tienes cuenta?{" "}
-            <Link
+            <a
               href="/auth/login?returnTo=/inicio"
               className="font-medium text-orange-600 hover:underline"
             >
               Inicia sesión
-            </Link>
+            </a>
           </p>
         </form>
       </CardContent>

@@ -143,9 +143,10 @@ export interface MotoSelect {
 export interface ProductoSelect {
   codPro: number;
   nombrePro: string;
+  tipoPro: "BIEN" | "SERVICIO" | "PAQUETE";
   precioPro: number;
   precioConImpuesto: number;
-  stockPro: number;
+  stockPro: number | null;
 }
 
 // Para selector de usuarios (mecánicos)

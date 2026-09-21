@@ -81,9 +81,14 @@ export function NavUser() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}>
+              <DropdownMenuItem
+                onClick={async () => {
+                  await logout();
+                  window.location.href = "/auth/logout";
+                }}
+              >
                 <LogOut />
-                Log out
+                Cerrar sesión
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

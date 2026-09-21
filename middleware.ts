@@ -126,12 +126,17 @@ export async function middleware(request: NextRequest) {
   // Check permissions for protected routes (la home del sistema es /inicio y no exige permiso específico)
   if (request.nextUrl.pathname !== "/inicio") {
     const permissions = request.cookies.get("permissions");
-    if (!permissions) {
+    if (!permissions?.value) {
       return NextResponse.redirect(new URL("/inicio", request.url), { status: 308 });
     }
 
     // If there is a valid session, check the permissions
-    const parsedPermission = JSON.parse(permissions.value);
+    let parsedPermission: string[] = [];
+    try {
+      parsedPermission = JSON.parse(permissions.value);
+    } catch {
+      return NextResponse.redirect(new URL("/inicio", request.url), { status: 308 });
+    }
     const requiredPathPermissions = PERMISSIONS.find((p) =>
       new RegExp(p.path).test(request.nextUrl.pathname),
     );

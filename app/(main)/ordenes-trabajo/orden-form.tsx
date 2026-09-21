@@ -371,10 +371,12 @@ export default function OrdenForm({
       (d) => d.codProDeto !== 0 && d.cantidadDeto > 0
     );
 
-    // Validar que ninguna cantidad exceda el stock
+    // Validar que ninguna cantidad exceda el stock (solo BIEN maneja stock;
+    // SERVICIO/PAQUETE no validan stock aquí).
     const stockValido = detalles.every((d) => {
       const producto = productos?.find((p) => p.codPro === d.codProDeto);
-      return !producto || d.cantidadDeto <= producto.stockPro;
+      if (!producto || producto.tipoPro !== "BIEN") return true;
+      return d.cantidadDeto <= (producto.stockPro ?? 0);
     });
 
     return camposObligatorios && hayDetalles && detallesCompletos && stockValido;
@@ -404,6 +406,9 @@ export default function OrdenForm({
 
       const producto = productos?.find((p) => p.codPro === d.codProDeto);
       if (!producto) return false;
+      // SERVICIO/PAQUETE no manejan stock: nunca exceden.
+      if (producto.tipoPro !== "BIEN") return false;
+      const stockActual = producto.stockPro ?? 0;
 
       // En modo edición, considerar la cantidad original del producto
       if (isEdit && orden) {
@@ -411,13 +416,13 @@ export default function OrdenForm({
         if (detalleOriginal) {
           // Producto ya existía en la orden
           // Stock disponible = stock actual + cantidad original en la orden
-          const stockDisponible = producto.stockPro + Math.abs(detalleOriginal.cantidadDeto);
+          const stockDisponible = stockActual + Math.abs(detalleOriginal.cantidadDeto);
           return d.cantidadDeto > stockDisponible;
         }
       }
 
       // En modo creación o para productos nuevos en edición
-      return d.cantidadDeto > producto.stockPro;
+      return d.cantidadDeto > stockActual;
     });
     if (detallesExcedenStock.length > 0) {
       setError("Una o más cantidades exceden el stock disponible");
@@ -1038,14 +1043,16 @@ export default function OrdenForm({
                   const producto = productos?.find(
                     (p) => p.codPro === detalle.codProDeto
                   );
+                  // Solo los BIEN manejan stock; SERVICIO (mano de obra) y PAQUETE no.
+                  const esBien = producto?.tipoPro === "BIEN";
 
-                  // Calcular stock disponible considerando si es edición
-                  let stockDisponible = producto?.stockPro || 0;
-                  if (isEdit && orden && producto) {
+                  // Calcular stock disponible considerando si es edición (solo BIEN)
+                  let stockDisponible = producto?.stockPro ?? 0;
+                  if (isEdit && orden && producto && esBien) {
                     const detalleOriginal = orden.detalles?.find(det => det.codProDeto === detalle.codProDeto);
                     if (detalleOriginal) {
                       // Si el producto ya existía, sumar la cantidad original al stock (usar Math.abs por si es negativa)
-                      stockDisponible = producto.stockPro + Math.abs(detalleOriginal.cantidadDeto);
+                      stockDisponible = (producto.stockPro ?? 0) + Math.abs(detalleOriginal.cantidadDeto);
                     }
                   }
 
@@ -1120,7 +1127,12 @@ export default function OrdenForm({
                                           <div className="flex flex-col">
                                             <span>{prod.nombrePro}</span>
                                             <span className="text-xs text-muted-foreground">
-                                              ${new Intl.NumberFormat("es-CO").format(prod.precioConImpuesto)} - Stock: {prod.stockPro}
+                                              ${new Intl.NumberFormat("es-CO").format(prod.precioConImpuesto)}
+                                              {prod.tipoPro === "BIEN"
+                                                ? ` - Stock: ${prod.stockPro ?? 0}`
+                                                : prod.tipoPro === "SERVICIO"
+                                                ? " - Servicio"
+                                                : " - Paquete"}
                                             </span>
                                           </div>
                                         </CommandItem>
@@ -1135,14 +1147,22 @@ export default function OrdenForm({
                                 El producto es obligatorio
                               </p>
                             ) : producto && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Stock disponible: {stockDisponible}
-                                {isEdit && orden && orden.detalles?.find(det => det.codProDeto === detalle.codProDeto) && (
-                                  <span className="text-xs text-blue-600 ml-1">
-                                    (incluye {Math.abs(orden.detalles.find(det => det.codProDeto === detalle.codProDeto)?.cantidadDeto || 0)} en esta orden)
-                                  </span>
-                                )}
-                              </p>
+                              esBien ? (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Stock disponible: {stockDisponible}
+                                  {isEdit && orden && orden.detalles?.find(det => det.codProDeto === detalle.codProDeto) && (
+                                    <span className="text-xs text-blue-600 ml-1">
+                                      (incluye {Math.abs(orden.detalles.find(det => det.codProDeto === detalle.codProDeto)?.cantidadDeto || 0)} en esta orden)
+                                    </span>
+                                  )}
+                                </p>
+                              ) : (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {producto.tipoPro === "SERVICIO"
+                                    ? "Servicio (mano de obra) — sin stock; la cantidad son horas/unidades"
+                                    : "Paquete (combo) — descuenta el stock de sus componentes"}
+                                </p>
+                              )
                             )}
                           </div>
 
@@ -1151,28 +1171,32 @@ export default function OrdenForm({
                             <label className="text-sm font-medium">Cantidad *</label>
                             <Input
                               type="number"
-                              min="1"
-                              max={detalle.seFactura === false ? 99 : (stockDisponible || 99)}
+                              min={esBien ? "1" : "0.5"}
+                              step={esBien ? "1" : "0.5"}
+                              max={!esBien ? 99 : detalle.seFactura === false ? 99 : (stockDisponible || 99)}
                               placeholder="0"
                               value={detalle.cantidadDeto === 0 ? "" : Math.abs(detalle.cantidadDeto)}
                               onChange={(e) => {
                                 const value = e.target.value === "" ? 0 : Number(e.target.value);
-                                // Si se factura, validar que no exceda el stock disponible
-                                if (detalle.seFactura !== false && value > stockDisponible) {
-                                  // No actualizar si excede el stock
+                                // Solo los BIEN facturables validan stock; servicios/paquetes no.
+                                if (esBien && detalle.seFactura !== false && value > stockDisponible) {
                                   return;
                                 }
                                 actualizarDetalle(detalle.id, "cantidadDeto", value);
                               }}
                               onKeyDown={(e) => {
-                                // Prevenir entrada de -, +, e, E, .
-                                if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+                                // Prevenir -, +, e, E. El punto decimal solo se permite en
+                                // servicios/paquetes (p.ej. 1.5 h de mano de obra).
+                                const bloqueadas = esBien
+                                  ? ['-', '+', 'e', 'E', '.']
+                                  : ['-', '+', 'e', 'E'];
+                                if (bloqueadas.includes(e.key)) {
                                   e.preventDefault();
                                 }
                               }}
                               className={
                                 detalle.cantidadDeto === 0 ||
-                                (detalle.seFactura !== false && Math.abs(detalle.cantidadDeto) > stockDisponible)
+                                (esBien && detalle.seFactura !== false && Math.abs(detalle.cantidadDeto) > stockDisponible)
                                   ? "border-red-500"
                                   : ""
                               }
@@ -1182,7 +1206,7 @@ export default function OrdenForm({
                                 La cantidad es obligatoria
                               </p>
                             )}
-                            {detalle.seFactura !== false && Math.abs(detalle.cantidadDeto) > 0 && Math.abs(detalle.cantidadDeto) > stockDisponible && (
+                            {esBien && detalle.seFactura !== false && Math.abs(detalle.cantidadDeto) > 0 && Math.abs(detalle.cantidadDeto) > stockDisponible && (
                               <p className="text-xs text-red-500 mt-1">
                                 Excede el stock disponible ({stockDisponible})
                               </p>
@@ -1194,19 +1218,33 @@ export default function OrdenForm({
                             )}
                           </div>
 
-                          {/* Precio Unitario */}
+                          {/* Precio Unitario. Editable para SERVICIO (mano de obra en
+                              modo LIBRE); fijo para BIEN y PAQUETE. */}
                           <div className="col-span-6 md:col-span-3">
                             <label className="text-sm font-medium">P. Unitario</label>
-                            <Input
-                              type="text"
-                              value={new Intl.NumberFormat("es-CO", {
-                                style: "currency",
-                                currency: "COP",
-                                minimumFractionDigits: 0,
-                              }).format(detalle.valorUnitarioDeto)}
-                              disabled
-                              className="bg-muted"
-                            />
+                            {producto?.tipoPro === "SERVICIO" ? (
+                              <Input
+                                type="text"
+                                value={new Intl.NumberFormat("es-CO").format(
+                                  detalle.valorUnitarioDeto || 0
+                                )}
+                                onChange={(e) => {
+                                  const value = Number(e.target.value.replace(/\D/g, "")) || 0;
+                                  actualizarDetalle(detalle.id, "valorUnitarioDeto", value);
+                                }}
+                              />
+                            ) : (
+                              <Input
+                                type="text"
+                                value={new Intl.NumberFormat("es-CO", {
+                                  style: "currency",
+                                  currency: "COP",
+                                  minimumFractionDigits: 0,
+                                }).format(detalle.valorUnitarioDeto)}
+                                disabled
+                                className="bg-muted"
+                              />
+                            )}
                           </div>
 
                           {/* Subtotal */}
