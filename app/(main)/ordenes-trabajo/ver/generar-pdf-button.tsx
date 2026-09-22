@@ -24,20 +24,13 @@ export function GenerarPdfButton({
     setError(undefined);
 
     try {
-      const result = tipo === "factura"
+      const { pdfUrl } = tipo === "factura"
         ? await generarFacturaPdfOrdenTrabajo(consecutivo)
         : await generarPdfOrdenTrabajo(consecutivo);
 
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
-
-      // El backend siempre retorna la URL del PDF (ver generarPdfOrdenTrabajo/
-      // generarFacturaPdfOrdenTrabajo en actions.ts, que nunca devuelven un blob).
-      if (result.pdfUrl) {
-        window.open(result.pdfUrl, "_blank");
-      }
+      // Ruta propia del front (/api/...), no la URL directa del backend: así
+      // pasa por el middleware, que adjunta el token de la sesión. Ver F0-01.
+      window.open(pdfUrl, "_blank");
     } catch (err) {
       console.error("Error generando PDF:", err);
       setError("Error al generar el PDF. Por favor intenta nuevamente.");
