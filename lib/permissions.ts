@@ -62,11 +62,4 @@ export const PERMISSIONS = [
   { path: "/reclamos/editar$", permissions: ["actualizar:reclamos"] },
   { path: "/reclamos/ver$", permissions: ["leer:reclamos"] },
   { path: "/reclamos$", permissions: ["leer:reclamos"] },
-
-  // Dominio legado en inglés (por si el menú aún enlaza)
-  { path: "/operations/create$", permissions: ["crear:operations"] },
-  { path: "/operations$", permissions: ["leer:operations"] },
-  { path: "/orders/completed$", permissions: ["leer:orders"] },
-  { path: "/orders/.+$", permissions: ["leer:orders"] },
-  { path: "/orders$", permissions: ["leer:orders"] },
 ];

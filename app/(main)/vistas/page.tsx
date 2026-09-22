@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { appFetch } from "@/lib/fetch";
 import Link from "next/link";
 import { columns } from "./columns";
-import { VwOperationModel } from "@/lib/types/operation/operation";
 import {Vista} from "@/lib/types/auth/vista";
 
 async function loadVistaData() {

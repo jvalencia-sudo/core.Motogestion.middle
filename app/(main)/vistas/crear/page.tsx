@@ -11,12 +11,12 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Rol } from "@/lib/types/auth/rol";
+import { Vista } from "@/lib/types/auth/vista";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import {crearRol} from "@/app/(main)/roles/actions";
+import {crearVista} from "@/app/(main)/vistas/actions";
 
 
 const formSchema = z.object({
@@ -32,7 +32,7 @@ export default function Page() {
     });
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        const resp = await crearRol(values as Rol);
+        const resp = await crearVista(values as unknown as Vista);
         if (resp?.error) {
             setError(resp.error);
         }
