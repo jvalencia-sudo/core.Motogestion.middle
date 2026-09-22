@@ -30,6 +30,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { crearMotoFromModal } from "./actions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CreateMotoRequest } from "@/lib/types/moto";
+import { Marca } from "@/lib/types/marca";
 
 const formSchema = z.object({
   placaMot: z
@@ -62,7 +64,7 @@ interface CreateMotoDialogProps {
   onOpenChange: (open: boolean) => void;
   onMotoCreated: (placaMot: string) => void;
   documentoCli: string;
-  marcas: any[];
+  marcas: Marca[];
 }
 
 export function CreateMotoDialog({
@@ -107,7 +109,7 @@ export function CreateMotoDialog({
     setError(undefined);
 
     try {
-      const resp = await crearMotoFromModal(values as any);
+      const resp = await crearMotoFromModal(values as CreateMotoRequest);
 
       if (resp?.error) {
         setError(resp.error);
@@ -271,7 +273,7 @@ export function CreateMotoDialog({
                           {marcas.length === 0 ? (
                             <SelectItem value="0">No hay marcas disponibles</SelectItem>
                           ) : (
-                            marcas.map((marca: any) => (
+                            marcas.map((marca) => (
                               <SelectItem
                                 key={marca.codMar}
                                 value={marca.codMar.toString()}

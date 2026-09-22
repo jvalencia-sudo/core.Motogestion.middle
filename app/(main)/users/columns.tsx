@@ -1,6 +1,6 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Row } from "@tanstack/react-table";
 import { VwUsuarioPerfil } from "@/lib/types/auth/user";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -53,7 +53,14 @@ export const columns: ColumnDef<VwUsuarioPerfil>[] = [
   {
     id: "actions",
     header: "Acciones",
-    cell: ({ row }) => {
+    // Nombrada con mayúscula: flexRender() la renderiza como componente (por
+    // eso los hooks funcionan bien aquí), pero el linter de hooks solo lo
+    // reconoce si el nombre empieza en mayúscula.
+    cell: ActionsCell,
+  },
+];
+
+function ActionsCell({ row }: { row: Row<VwUsuarioPerfil> }) {
       const user = row.original;
       const router = useRouter();
 
@@ -130,6 +137,4 @@ export const columns: ColumnDef<VwUsuarioPerfil>[] = [
           </DropdownMenuContent>
         </DropdownMenu>
       );
-    },
-  },
-];
+}

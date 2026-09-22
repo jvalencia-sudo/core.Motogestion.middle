@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Moto } from "@/lib/types/moto";
+import { Moto, CreateMotoRequest } from "@/lib/types/moto";
 import { Cliente } from "@/lib/types/cliente";
 import { Marca } from "@/lib/types/marca";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -108,7 +108,7 @@ export default function MotoFormClient({
             documentoCliMot: values.documentoCliMot,
             codMarcaMot: values.codMarcaMot,
           })
-        : await crearMoto(values as any);
+        : await crearMoto(values as CreateMotoRequest);
 
       if (resp?.error) {
         setError(resp.error);
@@ -240,7 +240,7 @@ export default function MotoFormClient({
                               {clientes.length === 0 ? (
                                 <SelectItem value="">No hay clientes disponibles</SelectItem>
                               ) : (
-                                clientes.map((cliente: any) => (
+                                clientes.map((cliente) => (
                                   <SelectItem
                                     key={cliente.documentoCli}
                                     value={cliente.documentoCli}
@@ -276,7 +276,7 @@ export default function MotoFormClient({
                               {marcas.length === 0 ? (
                                 <SelectItem value="">No hay marcas disponibles</SelectItem>
                               ) : (
-                                marcas.map((marca: any) => (
+                                marcas.map((marca) => (
                                   <SelectItem
                                     key={marca.codMar}
                                     value={marca.codMar.toString()}

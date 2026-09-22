@@ -1,5 +1,5 @@
-import { AppResponse, ErrorResponse } from "@/lib/types/response";
-import { isRedirectError } from "next/dist/client/components/redirect";
+import { AppResponse } from "@/lib/types/response";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { cookies } from "next/headers";
 import { permanentRedirect } from "next/navigation";
 
@@ -24,7 +24,7 @@ export async function appFetch<T>(
     const resp = await fetch(input, init);
 
     // Intentar leer JSON en todos los casos (éxito y error)
-    let responseData: any = null;
+    let responseData: unknown = null;
     try {
       responseData = await resp.json();
     } catch {
@@ -46,11 +46,12 @@ export async function appFetch<T>(
       let errorMessage = "Ha ocurrido un error inesperado";
 
       // Intentar extraer mensaje del JSON (puede ser 'detail' o 'message')
-      if (responseData) {
-        if (responseData.detail) {
-          errorMessage = responseData.detail;
-        } else if (responseData.message) {
-          errorMessage = responseData.message;
+      if (responseData && typeof responseData === "object") {
+        const data = responseData as { detail?: string; message?: string };
+        if (data.detail) {
+          errorMessage = data.detail;
+        } else if (data.message) {
+          errorMessage = data.message;
         }
       }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Row } from "@tanstack/react-table";
 import { PerfilDetallado } from "@/lib/types/auth/perfil";
 import {
   Tooltip,
@@ -89,7 +89,14 @@ export const perfilesColumns: ColumnDef<PerfilDetallado>[] = [
   {
     id: "actions",
     header: "Acciones",
-    cell: ({ row }) => {
+    // Nombrada con mayúscula: flexRender() la renderiza como componente (por
+    // eso los hooks funcionan bien aquí), pero el linter de hooks solo lo
+    // reconoce si el nombre empieza en mayúscula.
+    cell: ActionsCell,
+  },
+];
+
+function ActionsCell({ row }: { row: Row<PerfilDetallado> }) {
       const perfil = row.original;
       const router = useRouter();
       const isActivo = perfil.nombreEstPrf.toLowerCase() === "activo";
@@ -199,7 +206,7 @@ export const perfilesColumns: ColumnDef<PerfilDetallado>[] = [
                 </AlertDialogTitle>
                 <AlertDialogDescription>
                   ¿Estás seguro de {isActivo ? "desactivar" : "activar"} el
-                  perfil "{perfil.nombrePrf}"?
+                  perfil &quot;{perfil.nombrePrf}&quot;?
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -227,7 +234,7 @@ export const perfilesColumns: ColumnDef<PerfilDetallado>[] = [
               <AlertDialogHeader>
                 <AlertDialogTitle>Eliminar perfil</AlertDialogTitle>
                 <AlertDialogDescription>
-                  ¿Estás seguro de eliminar el perfil "{perfil.nombrePrf}"?
+                  ¿Estás seguro de eliminar el perfil &quot;{perfil.nombrePrf}&quot;?
                   Esta acción no se puede deshacer.
                 </AlertDialogDescription>
               </AlertDialogHeader>
@@ -273,6 +280,4 @@ export const perfilesColumns: ColumnDef<PerfilDetallado>[] = [
           </AlertDialog>
         </>
       );
-    },
-  },
-];
+}

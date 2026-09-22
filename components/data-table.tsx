@@ -43,6 +43,10 @@ type DataTableProps<TData, TValue> = {
 /**
  * Fuzzy filter function. Rankea los items por su coincidencia con el valor de búsqueda.
  */
+// FilterFn<TData> no se puede tipar de forma genérica-segura para una tabla
+// reutilizable (la propia definición de TanStack Table hace que FilterFn<unknown>
+// no sea asignable a FilterFn<TData> por varianza de sus tipos internos).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   const itemRank = rankItem(row.getValue(columnId), value);
   addMeta({ itemRank });
@@ -116,7 +120,7 @@ function renderTable<TData>(
   );
 }
 
-function renderPagination(table: TanstackTable<any>) {
+function renderPagination<TData>(table: TanstackTable<TData>) {
   return (
     <div className="flex items-center justify-end space-x-2 mt-4">
       <DataTablePagination table={table} />

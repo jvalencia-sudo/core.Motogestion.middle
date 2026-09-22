@@ -18,6 +18,7 @@ import {
   DetalleOrdenTrabajoResponse,
   ClienteSelect,
 } from "@/lib/types/ordenTrabajo";
+import { Marca } from "@/lib/types/marca";
 import {
   Form,
   FormControl,
@@ -83,7 +84,7 @@ interface OrdenFormProps {
   productos: ProductoSelect[];
   usuarios: UsuarioSelect[];
   estados: OtEstado[];
-  marcas: any[];
+  marcas: Marca[];
   isEdit?: boolean;
 }
 
@@ -291,7 +292,7 @@ export default function OrdenForm({
 
     const nuevoDetalle: DetalleFormRow = {
       id: uniqueId,
-      consecutivoOtDeto: (orden as any)?.consecutivoOt || 0,
+      consecutivoOtDeto: orden?.consecutivoOt || 0,
       // Iniciar vacío - el usuario debe seleccionar el producto y cantidad
       codProDeto: 0,
       valorUnitarioDeto: 0,
@@ -310,7 +311,11 @@ export default function OrdenForm({
     setDetalles(detalles.filter((d) => d.id !== id));
   };
 
-  const actualizarDetalle = (id: string, campo: string, valor: any) => {
+  const actualizarDetalle = (
+    id: string,
+    campo: string,
+    valor: string | number | boolean | undefined,
+  ) => {
     setDetalles(
       detalles.map((d) => {
         if (d.id === id) {
@@ -891,7 +896,7 @@ export default function OrdenForm({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {usuarios?.filter((u: any) => u.codRolPrfUsu !== 2).map((usuario) => (
+                            {usuarios?.filter((u) => u.codRolPrfUsu !== 2).map((usuario) => (
                               <SelectItem
                                 key={usuario.documentoUsu}
                                 value={usuario.documentoUsu}
@@ -926,7 +931,7 @@ export default function OrdenForm({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {usuarios?.filter((u: any) => u.codRolPrfUsu === 2).map((usuario) => (
+                            {usuarios?.filter((u) => u.codRolPrfUsu === 2).map((usuario) => (
                               <SelectItem
                                 key={usuario.documentoUsu}
                                 value={usuario.documentoUsu}

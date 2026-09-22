@@ -153,7 +153,9 @@ export interface ProductoSelect {
 export interface UsuarioSelect {
   documentoUsu: string;
   nombreCompleto: string;
-  codRolPrfUsu: number;
+  // Un usuario del endpoint de admin puede no tener rol asignado; los filtros
+  // por rol (=== 2 / !== 2) siguen siendo correctos con undefined.
+  codRolPrfUsu: number | undefined;
 }
 
 // Para selector de clientes en el formulario
