@@ -5,7 +5,7 @@ process.env.APP_BASE_URL = "http://localhost:3000";
 
 // next/headers: appFetch llama a cookies() para reenviar la cookie de sesión.
 vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({ toString: () => "logged=true" })),
+  cookies: vi.fn(async () => ({ toString: (): string => "logged=true" })),
 }));
 
 // permanentRedirect lanza una excepción especial en Next real (así interrumpe
