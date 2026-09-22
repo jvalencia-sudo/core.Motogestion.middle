@@ -184,41 +184,28 @@ export async function eliminarProductoOrden(
 }
 
 /**
- * Generar PDF de orden de trabajo
+ * URL para generar el PDF de una orden de trabajo.
+ *
+ * Es una ruta propia del front (/api/...), NUNCA la URL directa del backend
+ * (NEXT_PUBLIC_API_URL): esta última es pública y sin ella el middleware
+ * (middleware.ts) no tiene oportunidad de adjuntar el Bearer token de la
+ * sesión. El middleware ya reescribe cualquier /api/* hacia el backend con
+ * el token puesto (mismo mecanismo que usa appFetch); el backend, a su vez,
+ * exige sesión (401 sin token) y aísla por taller vía RLS (404 si la orden
+ * es de otro taller). Ver F0-01.
  */
 export async function generarPdfOrdenTrabajo(consecutivo: number) {
   "use server";
-
-  try {
-    // Construir la URL completa del PDF
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    const pdfUrl = `${baseUrl}/api/ordenes-trabajo/${consecutivo}/generar-pdf`;
-
-    // Retornar la URL del PDF para que el cliente pueda abrirlo/descargarlo
-    return { pdfUrl };
-  } catch (error) {
-    console.error("Error generando PDF:", error);
-    return { error: "Error al generar el PDF" };
-  }
+  return { pdfUrl: `/api/ordenes-trabajo/${consecutivo}/generar-pdf` };
 }
 
 /**
- * Generar PDF de factura en formato POS
+ * URL para generar la factura POS de una orden de trabajo. Ver el comentario
+ * de generarPdfOrdenTrabajo: misma razón para usar una ruta propia del front.
  */
 export async function generarFacturaPdfOrdenTrabajo(consecutivo: number) {
   "use server";
-
-  try {
-    // Construir la URL completa del PDF de factura
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    const pdfUrl = `${baseUrl}/api/ordenes-trabajo/${consecutivo}/generar-factura`;
-
-    // Retornar la URL del PDF para que el cliente pueda abrirlo/descargarlo
-    return { pdfUrl };
-  } catch (error) {
-    console.error("Error generando factura PDF:", error);
-    return { error: "Error al generar la factura PDF" };
-  }
+  return { pdfUrl: `/api/ordenes-trabajo/${consecutivo}/generar-factura` };
 }
 
 /**
