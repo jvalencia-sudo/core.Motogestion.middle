@@ -6,12 +6,12 @@ import { UserWithPermissions } from "@/lib/types/user";
 import { cookies } from "next/headers";
 
 export async function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname.includes("/auth")) {
+  if (request.nextUrl.pathname.startsWith("/auth/")) {
     return await auth0.middleware(request);
   }
 
   // Rewrite all API requests to the backend
-  if (request.nextUrl.pathname.includes("/api")) {
+  if (request.nextUrl.pathname.startsWith("/api/")) {
     // Usar path + query (robusto detrás de cualquier proxy; antes se hacía
     // request.url.replace(APP_BASE_URL,"") que falla si el proxy entrega http interno).
     const url = request.nextUrl.pathname + request.nextUrl.search;
