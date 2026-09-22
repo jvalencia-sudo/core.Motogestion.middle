@@ -1,15 +1,7 @@
 "use server";
 
 import { appFetch } from "@/lib/fetch";
-import { Incoterm } from "@/lib/types/core/incoterm";
-import { HazardType } from "@/lib/types/core/hazard-type";
-import { VehicleType } from "@/lib/types/core/vehicle-type";
-import { OperationType } from "@/lib/types/operation/operation-type";
-import { UnitType } from "@/lib/types/operation/unit-type";
-import { OperationCreateContract } from "@/lib/types/operation/operation";
 import { permanentRedirect } from "next/navigation";
-import { Location } from "@/lib/types/core/location";
-import { Customer } from "@/lib/types/core/client";
 import {Rol} from "@/lib/types/auth/rol";
 
 export async function crearRol(data: Rol) {

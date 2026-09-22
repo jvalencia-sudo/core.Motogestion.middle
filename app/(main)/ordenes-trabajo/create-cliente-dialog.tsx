@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CreateClienteRequest } from "@/lib/types/cliente";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -91,7 +92,7 @@ export function CreateClienteDialog({
     setError(undefined);
 
     try {
-      const resp = await crearClienteFromModal(values as any);
+      const resp = await crearClienteFromModal(values as CreateClienteRequest);
 
       if (resp?.error) {
         setError(resp.error);

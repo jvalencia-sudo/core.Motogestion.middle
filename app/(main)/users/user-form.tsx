@@ -115,12 +115,13 @@ export default function UserForm({ user, isEdit = false, roles, perfiles }: User
 
       // Si el perfil actual no está en la lista filtrada, limpiar el campo
       const currentPerfil = form.getValues("codPrfUsu");
+      // 0 no es un perfil válido (el schema exige min(1)): fuerza a reelegir.
       if (currentPerfil && !perfilesPorRol.find(p => p.codPrf === currentPerfil)) {
-        form.setValue("codPrfUsu", undefined);
+        form.setValue("codPrfUsu", 0);
       }
     } else {
       setPerfilesFiltrados([]);
-      form.setValue("codPrfUsu", undefined);
+      form.setValue("codPrfUsu", 0);
     }
   }, [selectedRol, perfiles, form]);
 

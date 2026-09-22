@@ -12,7 +12,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Cliente } from "@/lib/types/cliente";
+import { Cliente, CreateClienteRequest } from "@/lib/types/cliente";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -112,7 +112,7 @@ export default function ClienteForm({
             correoCli: values.correoCli,
             direccionCli: values.direccionCli || undefined,
           })
-        : await crearCliente(values as any);
+        : await crearCliente(values as CreateClienteRequest);
 
       if (resp?.error) {
         setError(resp.error);

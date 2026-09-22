@@ -16,7 +16,46 @@ import {
 } from "@/lib/types/ordenTrabajo";
 import { Cliente, CreateClienteRequest } from "@/lib/types/cliente";
 import { Moto, CreateMotoRequest } from "@/lib/types/moto";
+import { Marca } from "@/lib/types/marca";
 import { auth0 } from "@/lib/auth0";
+
+// Formas crudas de lo que devuelve el backend, solo con los campos que se leen
+// aquí (evita "any" sin inventarse el contrato completo del backend).
+type MotoRaw = {
+  placaMot: string;
+  marcaMoto?: string;
+  nombreMarca?: string;
+  modeloMot: string | number;
+  nombreCliente?: string;
+};
+type ProductoRaw = {
+  codPro: number;
+  nombrePro: string;
+  tipoPro: "BIEN" | "SERVICIO" | "PAQUETE";
+  precioPro: number;
+  stockPro: number | null;
+  impuestos?: { porcentaje?: number }[];
+};
+type UsuarioSelectRaw = {
+  documentoUsu: string;
+  nombreCompleto: string;
+  codRolPrfUsu: number;
+};
+type EstadoOtRaw = {
+  codOtEst: number;
+  nombreOtEst: string;
+  descripcionOtEst?: string;
+};
+type UsuarioAdminRaw = {
+  documentoUsu: number | string;
+  nombreUsu: string;
+  apellido1Usu: string;
+  apellido2Usu?: string;
+  correoUsu: string;
+  subIdUsu?: string;
+  codPrfUsu?: number;
+  codRolPrfUsu?: number;
+};
 
 
 /**
@@ -203,10 +242,10 @@ export async function obtenerMotosSelect(): Promise<MotoSelect[]> {
   try {
     const response = await appFetch("/api/motos/select");
     if (response.error || !response.data) return [];
-    return (response.data as any[]).map((moto: any) => ({
+    return (response.data as MotoRaw[]).map((moto) => ({
       placaMot: moto.placaMot,
-      marcaMoto: moto.marcaMoto,
-      modeloMot: moto.modeloMot,
+      marcaMoto: moto.marcaMoto ?? "",
+      modeloMot: String(moto.modeloMot),
       nombreCliente: moto.nombreCliente,
     }));
   } catch (error) {
@@ -224,10 +263,10 @@ export async function obtenerProductosSelect(): Promise<ProductoSelect[]> {
     if (response.error || !response.data) return [];
 
     // Mapear la respuesta del backend al formato esperado
-    return (response.data as any[]).map((producto: any) => {
+    return (response.data as ProductoRaw[]).map((producto) => {
       // Calcular el total de impuestos sumando todos los porcentajes
       const totalImpuestos = producto.impuestos?.reduce(
-        (sum: number, impuesto: any) => sum + (impuesto.porcentaje || 0),
+        (sum, impuesto) => sum + (impuesto.porcentaje || 0),
         0
       ) || 0;
 
@@ -260,7 +299,7 @@ export async function obtenerUsuariosSelect(): Promise<UsuarioSelect[]> {
     if (response.error || !response.data) {
       return [];
     }
-    const usuarios = (response.data as any[]).map((usuario: any) => ({
+    const usuarios = (response.data as UsuarioSelectRaw[]).map((usuario) => ({
       documentoUsu: usuario.documentoUsu,
       nombreCompleto: usuario.nombreCompleto,
       codRolPrfUsu: usuario.codRolPrfUsu,
@@ -281,7 +320,7 @@ export async function obtenerEstadosOt(): Promise<OtEstado[]> {
     if (response.error || !response.data) return [];
 
     // El backend devuelve en camelCase
-    return (response.data as any[]).map((estado: any) => ({
+    return (response.data as EstadoOtRaw[]).map((estado) => ({
       codOtEst: estado.codOtEst,
       nombreOtEst: estado.nombreOtEst,
       descripcionOtEst: estado.descripcionOtEst,
@@ -317,7 +356,7 @@ export async function obtenerMotosCliente(documentoCli: string): Promise<MotoSel
     if (response.error || !response.data) return [];
 
     // Backend devuelve en camelCase
-    return (response.data as any[]).map((moto: any) => ({
+    return (response.data as MotoRaw[]).map((moto) => ({
       placaMot: moto.placaMot,
       marcaMoto: moto.nombreMarca || "Sin marca",
       modeloMot: moto.modeloMot?.toString() || "",
@@ -366,11 +405,11 @@ export async function crearMotoFromModal(data: CreateMotoRequest) {
 /**
  * Obtener todas las marcas para el selector
  */
-export async function obtenerMarcasSelect() {
+export async function obtenerMarcasSelect(): Promise<Marca[]> {
   try {
     const response = await appFetch("/api/marcas");
     if (response.error || !response.data) return [];
-    return response.data as any[];
+    return response.data as Marca[];
   } catch (error) {
     console.error("Error obteniendo marcas:", error);
     return [];
@@ -386,8 +425,8 @@ export async function obtenerUsuariosAdmin() {
     if (response.error || !response.data) return [];
 
     // El endpoint devuelve { users: [...] }
-    const users = (response.data as any).users || [];
-    return users.map((user: any) => ({
+    const users = (response.data as { users?: UsuarioAdminRaw[] }).users || [];
+    return users.map((user) => ({
       documentoUsu: user.documentoUsu.toString(), // Convertir a string
       nombreCompleto: `${user.nombreUsu} ${user.apellido1Usu}${user.apellido2Usu ? ' ' + user.apellido2Usu : ''}`,
       correoUsu: user.correoUsu,
@@ -413,13 +452,14 @@ export async function obtenerUsuarioActual() {
     const usuarios = await obtenerUsuariosAdmin();
 
     // Buscar el usuario que coincide con el sub del usuario de Auth0
-    const usuarioActual = usuarios.find((u: any) => u.subIdUsu === session.user.sub);
+    const usuarioActual = usuarios.find((u) => u.subIdUsu === session.user.sub);
 
     if (!usuarioActual) {
-      // Fallback: buscar por email
-      const usuarioPorEmail = usuarios.find((u: any) =>
-        u.correoUsu.toLowerCase() === session.user.email.toLowerCase()
-      );
+      // Fallback: buscar por email (puede no venir en la sesión)
+      const email = session.user.email?.toLowerCase();
+      const usuarioPorEmail = email
+        ? usuarios.find((u) => u.correoUsu.toLowerCase() === email)
+        : undefined;
 
       return usuarioPorEmail || null;
     }

@@ -33,17 +33,10 @@ export function GenerarPdfButton({
         return;
       }
 
-      // Si el backend retorna la URL del PDF o el PDF directamente
+      // El backend siempre retorna la URL del PDF (ver generarPdfOrdenTrabajo/
+      // generarFacturaPdfOrdenTrabajo en actions.ts, que nunca devuelven un blob).
       if (result.pdfUrl) {
-        // Opción 1: El backend retorna una URL
         window.open(result.pdfUrl, "_blank");
-      } else if (result.pdfBlob) {
-        // Opción 2: El backend retorna el PDF como blob/base64
-        const blob = new Blob([result.pdfBlob], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
-        window.open(url, "_blank");
-        // Liberar el objeto URL después de un tiempo
-        setTimeout(() => URL.revokeObjectURL(url), 100);
       }
     } catch (err) {
       console.error("Error generando PDF:", err);

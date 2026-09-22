@@ -7,6 +7,8 @@ import {
   UpdateMotoRequest,
   MotoOperationResponse,
 } from "@/lib/types/moto";
+import { Cliente } from "@/lib/types/cliente";
+import { Marca } from "@/lib/types/marca";
 import { permanentRedirect } from "next/navigation";
 
 /**
@@ -94,7 +96,7 @@ export async function eliminarMoto(placa: string) {
  */
 export async function obtenerClientesParaFormulario() {
   try {
-    const response = await appFetch<any[]>("/api/clientes");
+    const response = await appFetch<Cliente[]>("/api/clientes");
     if (response.error || !response.data) {
       return [];
     }
@@ -111,7 +113,7 @@ export async function obtenerClientesParaFormulario() {
  */
 export async function obtenerMarcasParaFormulario() {
   try {
-    const response = await appFetch<any[]>("/api/marcas");
+    const response = await appFetch<Marca[]>("/api/marcas");
     if (response.error || !response.data) {
       return [];
     }

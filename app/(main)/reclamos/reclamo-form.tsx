@@ -85,7 +85,7 @@ export function ReclamoForm({
       if (isEdit && reclamo) {
         const resp = await editarReclamo(reclamo.codRec, data);
         if (resp?.error) {
-          setError(resp.message || "Error al actualizar el reclamo");
+          setError(resp.error || "Error al actualizar el reclamo");
           setLoading(false);
           return;
         }
@@ -93,7 +93,7 @@ export function ReclamoForm({
       } else {
         const resp = await crearReclamo(data as CreateReclamoFormData);
         if (resp?.error) {
-          setError(resp.message || "Error al crear el reclamo");
+          setError(resp.error || "Error al crear el reclamo");
           setLoading(false);
         }
       }

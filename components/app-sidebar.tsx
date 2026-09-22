@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Cpu, Package, Bike, Home } from "lucide-react";
+import { Cpu, Package, Bike, Home, type LucideIcon } from "lucide-react";
 
 import { getPermissions } from "@/app/(main)/actions";
 import { NavMain } from "@/components/nav-main";
@@ -18,12 +18,22 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 
+// Forma cruda: getItem() puede devolver null (permiso ausente) y los hijos aún
+// sin limpiar. clean() la convierte en NavItem, sin nulos en ningún nivel.
+type RawNavItem = {
+  title: string;
+  url: string;
+  icon?: LucideIcon;
+  isActive?: boolean;
+  items?: Array<RawNavItem | null>;
+};
+
 type NavItem = {
   title: string;
-  url?: string;
-  icon?: React.ReactNode;
+  url: string;
+  icon?: LucideIcon;
   isActive?: boolean;
-  items?: Array<NavItem | null>;
+  items?: NavItem[];
 };
 
 function getItem(
@@ -31,9 +41,9 @@ function getItem(
   title: string,
   permission: string,
   url?: string,
-  icon?: any,
-  items?: Array<NavItem | null>,
-): NavItem | null {
+  icon?: LucideIcon,
+  items?: Array<RawNavItem | null>,
+): RawNavItem | null {
   //We check if the permission has a : because it's a group if it doesn't
   if (permission.includes(":") && !permissions.includes(permission))
     return null;
@@ -42,7 +52,7 @@ function getItem(
     icon,
     title,
     items,
-    url,
+    url: url ?? "",
   };
 }
 
@@ -71,9 +81,9 @@ function getMenu(permissions: string[]): NavItem[] {
   ];
 
   // 🧹 Limpiar nulos tanto en el nivel principal como en los hijos
-  const clean = (items: Array<NavItem | null>): NavItem[] =>
+  const clean = (items: Array<RawNavItem | null>): NavItem[] =>
       items
-          .filter((i): i is NavItem => i !== null)
+          .filter((i): i is RawNavItem => i !== null)
           .map((i) => ({
             ...i,
             items: i.items ? clean(i.items) : undefined,
@@ -115,7 +125,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={items as any} />
+        <NavMain items={items} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

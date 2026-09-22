@@ -203,7 +203,7 @@ export async function eliminarReclamo(codRec: number) {
  */
 export async function obtenerOrdenesDisponibles(): Promise<OrdenTrabajoPara[]> {
   try {
-    const response = await appFetch<any[]>("/api/ordenes-trabajo");
+    const response = await appFetch<OrdenTrabajoPara[]>("/api/ordenes-trabajo");
 
     if (response.error || !response.data) {
       return [];

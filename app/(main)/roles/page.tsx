@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { appFetch } from "@/lib/fetch";
 import Link from "next/link";
 import { columns } from "./columns";
-import { VwOperationModel } from "@/lib/types/operation/operation";
 import {Rol} from "@/lib/types/auth/rol";
 
 async function loadOperationData() {
