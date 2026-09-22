@@ -144,7 +144,7 @@ export const columns: ColumnDef<Moto>[] = [
                       // Error: mostrar mensaje descriptivo
                       alert(`Error: ${resp.error}`);
                     }
-                  } catch (error) {
+                  } catch {
                     alert("Error al conectar con el servidor");
                   }
                 }

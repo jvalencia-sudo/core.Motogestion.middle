@@ -131,7 +131,7 @@ export const columns: ColumnDef<Cliente>[] = [
                       // Error: mostrar mensaje descriptivo
                       alert(`Error: ${resp.error}`);
                     }
-                  } catch (error) {
+                  } catch {
                     alert("Error al conectar con el servidor");
                   }
                 }

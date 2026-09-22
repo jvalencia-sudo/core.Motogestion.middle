@@ -94,7 +94,7 @@ export default function PerfilForm({ perfil, roles, isEdit = false }: PageProps)
       } else {
         form.reset();
       }
-    } catch (err) {
+    } catch {
       setError("Ocurrió un error inesperado");
     } finally {
       setLoading(false);

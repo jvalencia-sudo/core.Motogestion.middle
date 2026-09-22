@@ -5,25 +5,6 @@ import { ReclamoResumen } from "@/lib/types/reclamo";
 import { Badge } from "@/components/ui/badge";
 import { ActionsCell } from "./actions-cell";
 
-// Función para formatear fecha
-const formatearFecha = (fecha: string) => {
-  try {
-    if (fecha.includes('-')) {
-      const [year, month, day] = fecha.split('-');
-      return `${day}/${month}/${year}`;
-    }
-
-    const date = new Date(fecha);
-    return date.toLocaleDateString("es-CO", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  } catch {
-    return fecha;
-  }
-};
-
 // Función para obtener variante de badge según estado de garantía
 const getGarantiaVariant = (estado: string) => {
   switch (estado) {

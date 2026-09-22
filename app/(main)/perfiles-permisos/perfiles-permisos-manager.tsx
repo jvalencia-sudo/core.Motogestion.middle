@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   PerfilConRol,
   PerfilPermiso,
@@ -32,13 +32,7 @@ export function PerfilesPermisosManager({ perfiles }: PerfilesPermisosManagerPro
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (selectedPerfil) {
-      loadPermisosData();
-    }
-  }, [selectedPerfil]);
-
-  const loadPermisosData = async () => {
+  const loadPermisosData = useCallback(async () => {
     if (!selectedPerfil) return;
 
     setLoading(true);
@@ -60,7 +54,7 @@ export function PerfilesPermisosManager({ perfiles }: PerfilesPermisosManagerPro
         const disponiblesData = await disponiblesRes.json();
         setPermisosDisponibles(disponiblesData);
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Error al cargar los permisos",
@@ -69,7 +63,13 @@ export function PerfilesPermisosManager({ perfiles }: PerfilesPermisosManagerPro
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedPerfil, toast]);
+
+  useEffect(() => {
+    if (selectedPerfil) {
+      loadPermisosData();
+    }
+  }, [selectedPerfil, loadPermisosData]);
 
   const handleAsignarPermiso = async (permiso: PermisoDisponible) => {
     if (!selectedPerfil) return;
@@ -103,7 +103,7 @@ export function PerfilesPermisosManager({ perfiles }: PerfilesPermisosManagerPro
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Error al asignar el permiso",
@@ -144,7 +144,7 @@ export function PerfilesPermisosManager({ perfiles }: PerfilesPermisosManagerPro
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Error al cambiar el estado del permiso",

@@ -65,7 +65,7 @@ export default function RolForm({rol, isEdit = false}: PageProps) {
                 // Esto es para mostrar un mensaje de error
                 form.reset();
             }
-        } catch (err) {
+        } catch {
             setError("Ocurrió un error inesperado");
         } finally {
             setLoading(false);

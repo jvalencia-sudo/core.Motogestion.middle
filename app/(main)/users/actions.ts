@@ -3,39 +3,13 @@
 import { appFetch } from "@/lib/fetch";
 import {
   User,
-  UserListResponse,
   CreateUserRequest,
   UpdateUserRequest,
   ChangePasswordRequest,
   UpdateProfileRequest,
-  UserFilterParams,
   UserOperationResponse,
 } from "@/lib/types/auth/user";
 import { permanentRedirect } from "next/navigation";
-
-/**
- * Construye los query params para filtrar usuarios
- */
-function buildQueryParams(filters: UserFilterParams): string {
-  const params = new URLSearchParams();
-
-  if (filters.nombre) params.append("nombre", filters.nombre);
-  if (filters.correo) params.append("correo", filters.correo);
-  if (filters.documentoUsu) params.append("documentoUsu", filters.documentoUsu);
-  if (filters.codEstUsu !== undefined)
-    params.append("codEstUsu", filters.codEstUsu.toString());
-  if (filters.codPrfUsu) params.append("codPrfUsu", filters.codPrfUsu.toString());
-  if (filters.codRolPrfUsu)
-    params.append("codRolPrfUsu", filters.codRolPrfUsu.toString());
-  if (filters.codTipoUsu)
-    params.append("codTipoUsu", filters.codTipoUsu.toString());
-  if (filters.limit) params.append("limit", filters.limit.toString());
-  if (filters.offset !== undefined)
-    params.append("offset", filters.offset.toString());
-
-  return params.toString();
-}
-
 
 /**
  * Crear un nuevo usuario
