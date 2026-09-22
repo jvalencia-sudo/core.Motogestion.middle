@@ -80,7 +80,7 @@ function ActionsCell({ row }: { row: Row<VwUsuarioPerfil> }) {
             } else {
               router.refresh();
             }
-          } catch (error) {
+          } catch {
             alert("Error al cambiar el estado del usuario");
           }
         }

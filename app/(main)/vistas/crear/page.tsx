@@ -25,7 +25,7 @@ const formSchema = z.object({
 });
 
 export default function Page() {
-    const [error, setError] = useState<string>();
+    const [, setError] = useState<string>();
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),

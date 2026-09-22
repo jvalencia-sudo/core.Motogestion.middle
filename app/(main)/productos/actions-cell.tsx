@@ -38,7 +38,7 @@ export function ActionsCell({ producto }: ActionsCellProps) {
         } else {
           router.refresh();
         }
-      } catch (error) {
+      } catch {
         alert("Error al cambiar el estado del producto");
       }
     }

@@ -70,7 +70,7 @@ export default function ResetPasswordForm({ user }: ResetPasswordFormProps) {
           router.push("/users");
         }, 2000);
       }
-    } catch (err) {
+    } catch {
       setError("Ocurrió un error inesperado");
     } finally {
       setLoading(false);

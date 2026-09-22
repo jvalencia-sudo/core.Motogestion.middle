@@ -131,8 +131,9 @@ export default function UserForm({ user, isEdit = false, roles, perfiles }: User
 
     try {
       if (isEdit && user) {
-        // Para editar, no enviamos el password
-        const { password, ...updateData } = values;
+        // Para editar, no enviamos el password (se descarta a propósito)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password: _password, ...updateData } = values;
         const resp = await editarUsuario(
           user.documentoUsu.toString(),
           updateData as UpdateUserRequest
@@ -151,7 +152,7 @@ export default function UserForm({ user, isEdit = false, roles, perfiles }: User
           form.reset();
         }
       }
-    } catch (err) {
+    } catch {
       setError("Ocurrió un error inesperado");
     } finally {
       setLoading(false);

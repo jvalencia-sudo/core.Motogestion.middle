@@ -102,7 +102,7 @@ export function CreateClienteDialog({
         onClienteCreated(values.documentoCli);
         onOpenChange(false);
       }
-    } catch (err) {
+    } catch {
       setError("Ocurrió un error inesperado al crear el cliente");
     } finally {
       setLoading(false);

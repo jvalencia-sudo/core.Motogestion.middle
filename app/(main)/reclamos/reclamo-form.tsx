@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -130,7 +130,7 @@ export function ReclamoForm({
                 <FormField
                   control={form.control}
                   name="consecutivoOtRec"
-                  render={({ field }) => (
+                  render={() => (
                     <FormItem>
                       <FormLabel>Orden de Trabajo *</FormLabel>
                       <Popover open={openOrdenCombobox} onOpenChange={setOpenOrdenCombobox}>

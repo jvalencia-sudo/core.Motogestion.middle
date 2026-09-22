@@ -65,7 +65,7 @@ export default function MarcaForm({
       if (resp?.error) {
         setError(resp.error);
       }
-    } catch (err) {
+    } catch {
       setError("Ocurrió un error inesperado");
     } finally {
       setLoading(false);

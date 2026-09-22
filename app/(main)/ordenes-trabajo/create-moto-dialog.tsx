@@ -119,7 +119,7 @@ export function CreateMotoDialog({
         onMotoCreated(values.placaMot);
         onOpenChange(false);
       }
-    } catch (err) {
+    } catch {
       setError("Ocurrió un error inesperado al crear la moto");
     } finally {
       setLoading(false);

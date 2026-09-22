@@ -2,18 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Producto } from "@/lib/types/producto";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Pencil, XCircle, CheckCircle } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import Link from "next/link";
 import { ActionsCell } from "./actions-cell";
 import { ImpuestosCell } from "./impuestos-cell";
 

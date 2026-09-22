@@ -214,7 +214,6 @@ export default function OrdenForm({
         form.setValue("codOtEstOt", orden.codOtEstOt);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEdit, orden, form]);
 
   // Cargar motos del cliente cuando se selecciona un cliente
