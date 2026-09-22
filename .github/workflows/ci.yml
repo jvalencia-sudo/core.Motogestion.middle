@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm exec tsc --noEmit
+
+      - run: pnpm lint
+
+      - run: pnpm test
+
+      # Valores falsos: el build solo necesita que las variables tengan un
+      # formato válido (dominio real, https, secret largo). No se despliega
+      # nada con esto, es únicamente para validar que el build compila.
+      - run: pnpm build
+        env:
+          APP_BASE_URL: https://ci-build.example.com
+          AUTH0_BASE_URL: https://ci-build.example.com
+          AUTH0_DOMAIN: ci-build.auth0.com
+          AUTH0_ISSUER_BASE_URL: https://ci-build.auth0.com
+          AUTH0_CLIENT_ID: ci-placeholder
+          AUTH0_CLIENT_SECRET: ci-placeholder
+          AUTH0_SECRET: "0000000000000000000000000000000000000000000000000000000000000000"
+          AUTH0_AUDIENCE: https://ci-build.example.com/api
+          AUTH0_SCOPE: "openid profile email"
+          BASE_API_URL: https://ci-build.example.com/api
+          NEXT_PUBLIC_API_URL: https://ci-build.example.com
