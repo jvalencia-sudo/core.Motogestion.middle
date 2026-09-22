@@ -1,4 +1,3 @@
-"use server";
 import { AppSidebar } from "@/components/app-sidebar";
 import DynamicBreadcrumb from "@/components/dynamic-breadcrumb";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -12,6 +11,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { PermissionProvider } from "@/hooks/use-permissions";
 import { getPermissions } from "./actions";
 import SuscripcionBanner from "./suscripcion-banner";
+
+// Todo lo que cuelga de (main) está detrás de sesión y usa cookies: nunca
+// tiene sentido intentar pre-renderizarlo estático. Sin esto, Next igual
+// termina marcando cada ruta dinámica, pero solo después de abortar un
+// intento de pre-render que loguea "Dynamic server usage" como si fuera un
+// error real en cada actions.ts que usa appFetch.
+export const dynamic = "force-dynamic";
 
 export default async function MainLayout({
   children,
