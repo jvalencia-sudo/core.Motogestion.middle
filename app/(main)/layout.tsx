@@ -11,6 +11,7 @@ import {
 import { Toaster } from "@/components/ui/toaster";
 import { PermissionProvider } from "@/hooks/use-permissions";
 import { getPermissions } from "./actions";
+import SuscripcionBanner from "./suscripcion-banner";
 
 export default async function MainLayout({
   children,
@@ -23,6 +24,7 @@ export default async function MainLayout({
       <SidebarProvider>
         <AppSidebar variant="inset" />
         <SidebarInset>
+          <SuscripcionBanner />
           <header className="flex h-12 shrink-0 items-center justify-between transition-[width,height] ease-linear">
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />

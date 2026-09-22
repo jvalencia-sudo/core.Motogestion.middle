@@ -8,6 +8,8 @@ export const impuestoSchema = z.object({
   porcentaje: z.number().min(0).max(100),
 });
 
+export const tipoProductoSchema = z.enum(["BIEN", "SERVICIO", "PAQUETE"]);
+
 /**
  * Schema para crear un nuevo producto (camelCase)
  */
@@ -21,23 +23,31 @@ export const createProductoSchema = z
       .string()
       .min(1, "La descripción es requerida")
       .max(500, "La descripción no puede exceder 500 caracteres"),
+    tipoPro: tipoProductoSchema,
     precioPro: z.coerce
       .number()
       .min(0, "El precio debe ser mayor o igual a 0"),
     stockPro: z.coerce
       .number()
       .int("El stock debe ser un número entero")
-      .min(0, "El stock debe ser mayor o igual a 0"),
+      .min(0, "El stock debe ser mayor o igual a 0")
+      .optional(),
     stockProMin: z.coerce
       .number()
       .int("El stock mínimo debe ser un número entero")
-      .min(0, "El stock mínimo debe ser mayor o igual a 0"),
+      .min(0, "El stock mínimo debe ser mayor o igual a 0")
+      .optional(),
     impuestos: z.array(impuestoSchema).optional(),
   })
-  .refine((data) => data.stockPro >= data.stockProMin, {
-    message: "El stock actual no puede ser menor que el stock mínimo",
-    path: ["stockPro"],
-  });
+  // El stock solo aplica a los BIEN; para SERVICIO/PAQUETE se ignora.
+  .refine(
+    (data) =>
+      data.tipoPro !== "BIEN" || (data.stockPro ?? 0) >= (data.stockProMin ?? 0),
+    {
+      message: "El stock actual no puede ser menor que el stock mínimo",
+      path: ["stockPro"],
+    }
+  );
 
 /**
  * Schema para actualizar un producto existente (camelCase)
@@ -53,6 +63,7 @@ export const updateProductoSchema = z
       .string()
       .max(500, "La descripción no puede exceder 500 caracteres")
       .optional(),
+    tipoPro: tipoProductoSchema.optional(),
     precioPro: z.coerce
       .number()
       .min(0, "El precio debe ser mayor o igual a 0")
@@ -71,7 +82,11 @@ export const updateProductoSchema = z
   })
   .refine(
     (data) => {
-      if (data.stockPro !== undefined && data.stockProMin !== undefined) {
+      if (
+        data.tipoPro === "BIEN" &&
+        data.stockPro !== undefined &&
+        data.stockProMin !== undefined
+      ) {
         return data.stockPro >= data.stockProMin;
       }
       return true;
