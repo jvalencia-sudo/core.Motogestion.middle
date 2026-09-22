@@ -16,7 +16,7 @@ export async function middleware(request: NextRequest) {
     // request.url.replace(APP_BASE_URL,"") que falla si el proxy entrega http interno).
     const url = request.nextUrl.pathname + request.nextUrl.search;
 
-    const session = await auth0.getSession();
+    const session = await auth0.getSession(request);
     if (session) {
       request.headers.set(
         "Authorization",
@@ -48,7 +48,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect to login if there is no session (volviendo luego a la ruta pedida)
-  const session = await auth0.getSession();
+  // En middleware hay que pasar el `request` explícito: la sobrecarga sin
+  // argumentos usa next/headers internamente, que no es válido aquí (a
+  // diferencia de Server Components/Actions) y el SDK 4.x estable sí lo hace
+  // fallar con "headers called outside a request scope" (la beta no lo exigía).
+  const session = await auth0.getSession(request);
   if (!session) {
     const loginUrl = new URL("/auth/login", request.url);
     loginUrl.searchParams.set(
