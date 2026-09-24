@@ -31,11 +31,6 @@ export async function middleware(request: NextRequest) {
     });
   }
 
-  // Allow access to public endpoints without authentication
-  if (request.nextUrl.pathname.startsWith("/api/public")) {
-    return NextResponse.next();
-  }
-
   // Página informativa para usuarios autenticados pero NO registrados en el sistema
   if (request.nextUrl.pathname === "/no-registrado") {
     return NextResponse.next();
