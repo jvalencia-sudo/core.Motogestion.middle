@@ -62,6 +62,48 @@ describe("scrubBeforeSend", () => {
     expect(url).not.toContain("1122334455");
   });
 
+  it("limpia el NIT con dígito de verificación de la url", () => {
+    const event = {
+      request: { url: "https://front.example.com/api/clientes/900123456-7" },
+    };
+
+    const resultado = scrubBeforeSend(event);
+
+    const url = resultado.request!.url as string;
+    expect(url).not.toContain("900123456-7");
+    expect(url).toBe("https://front.example.com/api/clientes/{id}");
+  });
+
+  it("limpia un documento tipo pasaporte/cédula de extranjería (9 caracteres)", () => {
+    const event = {
+      request: { url: "https://front.example.com/api/clientes/AB1234567" },
+    };
+
+    const resultado = scrubBeforeSend(event);
+
+    expect(resultado.request!.url).toBe("https://front.example.com/api/clientes/{id}");
+  });
+
+  it("limpia from/to de un breadcrumb de navegación del router", () => {
+    const event = {
+      breadcrumbs: [
+        {
+          category: "navigation",
+          data: {
+            from: "/motos/editar?placa=ABC123",
+            to: "/api/clientes/1122334455",
+          },
+        },
+      ],
+    };
+
+    const resultado = scrubBeforeSend(event);
+
+    const data = (resultado.breadcrumbs![0] as { data: { from: string; to: string } }).data;
+    expect(data.from).not.toContain("ABC123");
+    expect(data.to).not.toContain("1122334455");
+  });
+
   it("no falla con un evento vacío", () => {
     expect(scrubBeforeSend({})).toEqual({});
   });
