@@ -20,6 +20,7 @@ const CLAVES_SENSIBLES = new Set([
   "documento_cli",
   "documento_cli_mot",
   "documento_usu",
+  "documento_usu_mc_ot",
   "telefono_cli",
   "correo_cli",
   "email",
@@ -31,23 +32,39 @@ const CLAVES_SENSIBLES = new Set([
 ]);
 
 // Segmento de path que es un valor real, no parte fija de la URL: documentos/ids
-// (4+ dígitos) o placas (6 alfanuméricos con al menos un dígito). El dígito
-// obligatorio es clave: sin él, segmentos fijos de 6 letras como "editar" o
-// "config" quedarían redactados por error (se comprobó con un test que fallaba).
-const SEGMENTO_VALOR = /^\d{4,}$|^(?=[A-Za-z0-9]*\d)[A-Za-z0-9]{6}$/;
+// (4+ dígitos), NIT con dígito de verificación (900123456-7), o alfanumérico tipo
+// placa/pasaporte/cédula de extranjería (6-12 caracteres con al menos un dígito).
+// El dígito obligatorio en el tercer caso es clave: sin él, segmentos fijos de
+// 6-12 letras como "editar" o "config" quedarían redactados por error (se
+// comprobó con un test que fallaba). Ningún segmento fijo real de las rutas del
+// front tiene dígitos, así que ampliar el rango no crea falsos positivos nuevos.
+const SEGMENTO_VALOR = /^\d{4,}$|^\d+-\d+$|^(?=[A-Za-z0-9]*\d)[A-Za-z0-9]{6,12}$/;
+
+function limpiarPath(path: string): string {
+  return path
+    .split("/")
+    .map((seg) => (SEGMENTO_VALOR.test(seg) ? "{id}" : seg))
+    .join("/");
+}
 
 function limpiarUrl(url: string): string {
+  // Los breadcrumbs de fetch traen una URL absoluta, pero los de navegación del
+  // router ("from"/"to") traen solo el path relativo (p.ej. "/motos/editar?placa=
+  // ABC123") -- new URL(url) sin base falla ahí, así que se reintenta con una base
+  // dummy y se descarta esa base al armar el resultado.
   try {
     const u = new URL(url);
     // Se arma el string a mano (no u.pathname = ...) porque el setter de
     // pathname percent-codea las llaves ("{id}" -> "%7Bid%7D") -- así queda
     // legible en Sentry. El query string se descarta entero (?placa=ABC123
     // también puede traer un valor real).
-    const pathLimpio = u.pathname
-      .split("/")
-      .map((seg) => (SEGMENTO_VALOR.test(seg) ? "{id}" : seg))
-      .join("/");
-    return `${u.origin}${pathLimpio}`;
+    return `${u.origin}${limpiarPath(u.pathname)}`;
+  } catch {
+    // no era una URL absoluta
+  }
+  try {
+    const u = new URL(url, "https://x");
+    return limpiarPath(u.pathname);
   } catch {
     return url;
   }
@@ -64,6 +81,22 @@ function redactar(valor: unknown): unknown {
     );
   }
   return valor;
+}
+
+function limpiarBreadcrumbs(breadcrumbs: unknown): void {
+  if (!Array.isArray(breadcrumbs)) return;
+  for (const crumb of breadcrumbs as Record<string, unknown>[]) {
+    const data = crumb?.data as Record<string, unknown> | undefined;
+    if (!data) continue;
+    // Los breadcrumbs de fetch/xhr usan "url"; los de navegación del router
+    // ("navigation") usan "from"/"to" -- sin esto, /motos/editar?placa=ABC123
+    // pasaba intacto en un breadcrumb de navegación.
+    for (const campo of ["url", "from", "to"] as const) {
+      if (typeof data[campo] === "string") {
+        data[campo] = limpiarUrl(data[campo] as string);
+      }
+    }
+  }
 }
 
 // Sentry no exporta un tipo de evento cuyo `request` acepte un índice genérico
@@ -83,13 +116,6 @@ export function scrubBeforeSend<T extends { request?: unknown; extra?: unknown; 
   if (event.extra) {
     event.extra = redactar(event.extra);
   }
-  if (Array.isArray(event.breadcrumbs)) {
-    for (const crumb of event.breadcrumbs as Record<string, unknown>[]) {
-      const data = crumb?.data as Record<string, unknown> | undefined;
-      if (data && typeof data.url === "string") {
-        data.url = limpiarUrl(data.url);
-      }
-    }
-  }
+  limpiarBreadcrumbs(event.breadcrumbs);
   return event;
 }
