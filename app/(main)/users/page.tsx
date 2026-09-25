@@ -14,7 +14,6 @@ async function loadUsersData() {
 }
 export default async function UsersPage() {
   const usersData = await loadUsersData();
- console.log(usersData);
   return (
     <>
       <PageHeader

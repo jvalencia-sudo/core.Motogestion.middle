@@ -15,8 +15,6 @@ async function loadMotoData() {
 export default async function MotosPage() {
   const motoData = await loadMotoData();
 
-  console.log("🛵 Motos cargadas:", motoData);
-
   return (
     <>
       <PageHeader
