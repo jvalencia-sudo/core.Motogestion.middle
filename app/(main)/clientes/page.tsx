@@ -15,8 +15,6 @@ async function loadClienteData() {
 export default async function ClientesPage() {
   const clienteData = await loadClienteData();
 
-  console.log("👥 Clientes cargados:", clienteData);
-
   return (
     <>
       <PageHeader

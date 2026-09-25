@@ -14,7 +14,6 @@ async function loadVistaData() {
 
 export default async function Component() {
   const operationData = await loadVistaData();
-  console.log(operationData);
   return (
     <>
       <PageHeader

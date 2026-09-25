@@ -15,8 +15,6 @@ async function loadMarcaData() {
 export default async function MarcasPage() {
   const marcaData = await loadMarcaData();
 
-  console.log("🏍️ Marcas cargadas:", marcaData);
-
   return (
     <>
       <PageHeader
