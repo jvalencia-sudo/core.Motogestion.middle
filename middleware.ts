@@ -3,11 +3,23 @@ import { NextResponse, type NextRequest } from "next/server";
 import { auth0 } from "@/lib/auth0";
 import { PERMISSIONS } from "@/lib/permissions";
 import { UserWithPermissions } from "@/lib/types/user";
-import { cookies } from "next/headers";
+
+const APP_COOKIES = ["logged", "permissions", "taller", "perfil"];
 
 export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/auth/")) {
-    return await auth0.middleware(request);
+    const response = await auth0.middleware(request);
+    // El SDK de Auth0 solo limpia su propia sesión; estas cookies las
+    // maneja esta app a mano (más abajo) y sobreviven al logout si no las
+    // borramos aquí. Sin esto, iniciar sesión con OTRA cuenta en el mismo
+    // navegador reutiliza los permisos/taller/perfil de la cuenta anterior,
+    // porque el middleware solo vuelve a pedirlos cuando falta "logged".
+    if (request.nextUrl.pathname === "/auth/logout") {
+      for (const name of APP_COOKIES) {
+        response.cookies.delete(name);
+      }
+    }
+    return response;
   }
 
   // Rewrite all API requests to the backend
@@ -57,9 +69,24 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Cookies que se acaban de resolver en ESTA petición (login recién hecho).
+  // Se aplican al final sobre la respuesta que se vaya a devolver -- sea cual
+  // sea la rama -- para que el navegador las reciba. request.cookies también
+  // se actualiza en el momento, porque el resto de este mismo middleware (el
+  // chequeo de permisos de abajo) y el Server Component que se renderice a
+  // continuación leen de ahí, no de lo que se le fije a la respuesta: sin
+  // esto, la PRIMERA petición tras loguear (o tras cambiar de cuenta/perfil)
+  // seguía viendo cookies viejas o vacías hasta que el usuario recargaba.
+  const nuevasCookies: { name: string; value: string }[] = [];
+  // "Secure" exige HTTPS real. En local (http://localhost) algunos navegadores
+  // /extensiones la descartan igual aunque Chrome trate a localhost como
+  // origen seguro -- antes solo "permissions" la llevaba fija en true (las
+  // otras 3 cookies no), lo que hacía que justo esa cookie se perdiera en
+  // ciertos perfiles de navegador mientras las demás sí llegaban bien.
+  const esHttps = request.nextUrl.protocol === "https:";
+
   // If the user is logged in but the "logged" cookie is not set, authenticate them
-  const cookiesStore = await cookies();
-  if (!cookiesStore.has("logged")) {
+  if (!request.cookies.has("logged")) {
     try {
       const resp = await fetch(
         new URL("/api/auth/login", process.env.BASE_API_URL),
@@ -78,38 +105,21 @@ export async function middleware(request: NextRequest) {
       );
 
       if (resp.ok) {
-        cookiesStore.set({
-          name: "logged",
-          value: "true",
-          httpOnly: true,
-          path: "/",
-        });
-
         const user: UserWithPermissions = await resp.json();
-        cookiesStore.set({
-          name: "permissions",
-          value: JSON.stringify(user.permissions),
-          httpOnly: true,
-          path: "/",
-          secure: true,
-        });
 
+        nuevasCookies.push(
+          { name: "logged", value: "true" },
+          { name: "permissions", value: JSON.stringify(user.permissions) },
+        );
         if (user.nombreTal) {
-          cookiesStore.set({
-            name: "taller",
-            value: user.nombreTal,
-            httpOnly: true,
-            path: "/",
-          });
+          nuevasCookies.push({ name: "taller", value: user.nombreTal });
+        }
+        if (user.perfil) {
+          nuevasCookies.push({ name: "perfil", value: user.perfil });
         }
 
-        if (user.perfil) {
-          cookiesStore.set({
-            name: "perfil",
-            value: user.perfil,
-            httpOnly: true,
-            path: "/",
-          });
+        for (const cookie of nuevasCookies) {
+          request.cookies.set(cookie.name, cookie.value);
         }
       } else if (resp.status === 403) {
         // El backend no reconoce al usuario (correo no registrado en el sistema)
@@ -122,11 +132,24 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  const aplicarCookies = (response: NextResponse) => {
+    for (const cookie of nuevasCookies) {
+      response.cookies.set(cookie.name, cookie.value, {
+        httpOnly: true,
+        path: "/",
+        secure: esHttps,
+      });
+    }
+    return response;
+  };
+
   // Check permissions for protected routes (la home del sistema es /inicio y no exige permiso específico)
   if (request.nextUrl.pathname !== "/inicio") {
     const permissions = request.cookies.get("permissions");
     if (!permissions?.value) {
-      return NextResponse.redirect(new URL("/inicio", request.url), { status: 308 });
+      return aplicarCookies(
+        NextResponse.redirect(new URL("/inicio", request.url)),
+      );
     }
 
     // If there is a valid session, check the permissions
@@ -134,7 +157,9 @@ export async function middleware(request: NextRequest) {
     try {
       parsedPermission = JSON.parse(permissions.value);
     } catch {
-      return NextResponse.redirect(new URL("/inicio", request.url), { status: 308 });
+      return aplicarCookies(
+        NextResponse.redirect(new URL("/inicio", request.url)),
+      );
     }
     const requiredPathPermissions = PERMISSIONS.find((p) =>
       new RegExp(p.path).test(request.nextUrl.pathname),
@@ -148,11 +173,13 @@ export async function middleware(request: NextRequest) {
         parsedPermission.includes(p),
       )
     ) {
-      return NextResponse.redirect(new URL("/inicio", request.url), { status: 308 });
+      return aplicarCookies(
+        NextResponse.redirect(new URL("/inicio", request.url)),
+      );
     }
   }
 
-  return NextResponse.next();
+  return aplicarCookies(NextResponse.next({ request }));
 }
 
 export const config = {
