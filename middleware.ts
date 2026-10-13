@@ -3,7 +3,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { auth0 } from "@/lib/auth0";
 import { PERMISSIONS } from "@/lib/permissions";
 import { UserWithPermissions } from "@/lib/types/user";
-import { cookies } from "next/headers";
 
 const APP_COOKIES = ["logged", "permissions", "taller", "perfil"];
 
@@ -70,9 +69,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Cookies que se acaban de resolver en ESTA petición (login recién hecho).
+  // Se aplican al final sobre la respuesta que se vaya a devolver -- sea cual
+  // sea la rama -- para que el navegador las reciba. request.cookies también
+  // se actualiza en el momento, porque el resto de este mismo middleware (el
+  // chequeo de permisos de abajo) y el Server Component que se renderice a
+  // continuación leen de ahí, no de lo que se le fije a la respuesta: sin
+  // esto, la PRIMERA petición tras loguear (o tras cambiar de cuenta/perfil)
+  // seguía viendo cookies viejas o vacías hasta que el usuario recargaba.
+  const nuevasCookies: { name: string; value: string; secure?: boolean }[] = [];
+
   // If the user is logged in but the "logged" cookie is not set, authenticate them
-  const cookiesStore = await cookies();
-  if (!cookiesStore.has("logged")) {
+  if (!request.cookies.has("logged")) {
     try {
       const resp = await fetch(
         new URL("/api/auth/login", process.env.BASE_API_URL),
@@ -91,38 +99,25 @@ export async function middleware(request: NextRequest) {
       );
 
       if (resp.ok) {
-        cookiesStore.set({
-          name: "logged",
-          value: "true",
-          httpOnly: true,
-          path: "/",
-        });
-
         const user: UserWithPermissions = await resp.json();
-        cookiesStore.set({
-          name: "permissions",
-          value: JSON.stringify(user.permissions),
-          httpOnly: true,
-          path: "/",
-          secure: true,
-        });
 
+        nuevasCookies.push(
+          { name: "logged", value: "true" },
+          {
+            name: "permissions",
+            value: JSON.stringify(user.permissions),
+            secure: true,
+          },
+        );
         if (user.nombreTal) {
-          cookiesStore.set({
-            name: "taller",
-            value: user.nombreTal,
-            httpOnly: true,
-            path: "/",
-          });
+          nuevasCookies.push({ name: "taller", value: user.nombreTal });
+        }
+        if (user.perfil) {
+          nuevasCookies.push({ name: "perfil", value: user.perfil });
         }
 
-        if (user.perfil) {
-          cookiesStore.set({
-            name: "perfil",
-            value: user.perfil,
-            httpOnly: true,
-            path: "/",
-          });
+        for (const cookie of nuevasCookies) {
+          request.cookies.set(cookie.name, cookie.value);
         }
       } else if (resp.status === 403) {
         // El backend no reconoce al usuario (correo no registrado en el sistema)
@@ -135,11 +130,24 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  const aplicarCookies = (response: NextResponse) => {
+    for (const cookie of nuevasCookies) {
+      response.cookies.set(cookie.name, cookie.value, {
+        httpOnly: true,
+        path: "/",
+        secure: cookie.secure,
+      });
+    }
+    return response;
+  };
+
   // Check permissions for protected routes (la home del sistema es /inicio y no exige permiso específico)
   if (request.nextUrl.pathname !== "/inicio") {
     const permissions = request.cookies.get("permissions");
     if (!permissions?.value) {
-      return NextResponse.redirect(new URL("/inicio", request.url), { status: 308 });
+      return aplicarCookies(
+        NextResponse.redirect(new URL("/inicio", request.url), { status: 308 }),
+      );
     }
 
     // If there is a valid session, check the permissions
@@ -147,7 +155,9 @@ export async function middleware(request: NextRequest) {
     try {
       parsedPermission = JSON.parse(permissions.value);
     } catch {
-      return NextResponse.redirect(new URL("/inicio", request.url), { status: 308 });
+      return aplicarCookies(
+        NextResponse.redirect(new URL("/inicio", request.url), { status: 308 }),
+      );
     }
     const requiredPathPermissions = PERMISSIONS.find((p) =>
       new RegExp(p.path).test(request.nextUrl.pathname),
@@ -161,11 +171,13 @@ export async function middleware(request: NextRequest) {
         parsedPermission.includes(p),
       )
     ) {
-      return NextResponse.redirect(new URL("/inicio", request.url), { status: 308 });
+      return aplicarCookies(
+        NextResponse.redirect(new URL("/inicio", request.url), { status: 308 }),
+      );
     }
   }
 
-  return NextResponse.next();
+  return aplicarCookies(NextResponse.next({ request }));
 }
 
 export const config = {

@@ -7,15 +7,6 @@ vi.mock("@/lib/auth0", () => ({
   auth0: { getSession, middleware: auth0Middleware },
 }));
 
-// Con "logged" siempre presente, la rama que llama al backend (/api/auth/login)
-// nunca se ejerce: estos tests se enfocan en el chequeo de permisos.
-vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({
-    has: () => true,
-    set: vi.fn(),
-  })),
-}));
-
 const { middleware } = await import("@/middleware");
 
 const SESSION = {
@@ -23,11 +14,21 @@ const SESSION = {
   user: { email: "usuario@taller.com", sub: "auth0|1" },
 };
 
-function req(path: string, permissionsCookie?: string) {
+// Por defecto la cookie "logged" ya está presente: la rama que llama al
+// backend (/api/auth/login) no se ejerce y estos tests se enfocan en el
+// chequeo de permisos. Pasar `logged: false` simula una sesión recién creada.
+function req(
+  path: string,
+  permissionsCookie?: string,
+  { logged = true }: { logged?: boolean } = {},
+) {
   const headers = new Headers();
+  const partes: string[] = [];
+  if (logged) partes.push("logged=true");
   if (permissionsCookie !== undefined) {
-    headers.set("cookie", `permissions=${encodeURIComponent(permissionsCookie)}`);
+    partes.push(`permissions=${encodeURIComponent(permissionsCookie)}`);
   }
+  if (partes.length) headers.set("cookie", partes.join("; "));
   return new NextRequest(new URL(path, "http://localhost:3000"), { headers });
 }
 
@@ -35,6 +36,38 @@ describe("middleware", () => {
   beforeEach(() => {
     getSession.mockReset();
     auth0Middleware.mockReset();
+  });
+
+  it("login recién hecho: la MISMA petición ya ve los permisos nuevos, sin necesitar un segundo request", async () => {
+    getSession.mockResolvedValue(SESSION);
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        permissions: ["crear:productos"],
+        nombreTal: "Taller X",
+        perfil: "Administrador",
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubEnv("BASE_API_URL", "http://backend.local");
+
+    try {
+      const res = await middleware(req("/productos/crear", undefined, { logged: false }));
+
+      // No debe redirigir a /inicio: el permiso recién llegado del backend ya
+      // se usa para ESTE mismo request, no el de una cookie vieja/ausente.
+      expect(res.headers.get("location")).toBeNull();
+      // Y debe quedar guardado para el navegador, para las próximas peticiones.
+      expect(res.cookies.get("logged")?.value).toBe("true");
+      expect(res.cookies.get("permissions")?.value).toBe(
+        JSON.stringify(["crear:productos"]),
+      );
+      expect(res.cookies.get("taller")?.value).toBe("Taller X");
+      expect(res.cookies.get("perfil")?.value).toBe("Administrador");
+    } finally {
+      vi.unstubAllGlobals();
+      vi.unstubAllEnvs();
+    }
   });
 
   it("/auth/logout borra las cookies propias de la app además de la sesión de Auth0", async () => {
