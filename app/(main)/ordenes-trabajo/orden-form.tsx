@@ -1217,7 +1217,7 @@ export default function OrdenForm({
                             )}
                             {detalle.seFactura === false && Math.abs(detalle.cantidadDeto) > 0 && (
                               <p className="text-xs text-green-600 mt-1">
-                                No afecta el inventario (no se cobra)
+                                Sin costo para el cliente
                               </p>
                             )}
                           </div>
@@ -1346,7 +1346,7 @@ export default function OrdenForm({
                           </span>
                         </div>
                         <p className="text-xs text-green-600 mt-1">
-                          {detalles.length - contarProductosFacturables()} producto{(detalles.length - contarProductosFacturables()) !== 1 ? 's' : ''} no cobrado{(detalles.length - contarProductosFacturables()) !== 1 ? 's' : ''}
+                          {detalles.length - contarProductosFacturables()} producto{(detalles.length - contarProductosFacturables()) !== 1 ? 's' : ''} sin costo
                         </p>
                       </div>
                     )}
