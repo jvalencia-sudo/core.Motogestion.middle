@@ -148,7 +148,7 @@ export async function middleware(request: NextRequest) {
     const permissions = request.cookies.get("permissions");
     if (!permissions?.value) {
       return aplicarCookies(
-        NextResponse.redirect(new URL("/inicio", request.url), { status: 308 }),
+        NextResponse.redirect(new URL("/inicio", request.url)),
       );
     }
 
@@ -158,7 +158,7 @@ export async function middleware(request: NextRequest) {
       parsedPermission = JSON.parse(permissions.value);
     } catch {
       return aplicarCookies(
-        NextResponse.redirect(new URL("/inicio", request.url), { status: 308 }),
+        NextResponse.redirect(new URL("/inicio", request.url)),
       );
     }
     const requiredPathPermissions = PERMISSIONS.find((p) =>
@@ -174,7 +174,7 @@ export async function middleware(request: NextRequest) {
       )
     ) {
       return aplicarCookies(
-        NextResponse.redirect(new URL("/inicio", request.url), { status: 308 }),
+        NextResponse.redirect(new URL("/inicio", request.url)),
       );
     }
   }

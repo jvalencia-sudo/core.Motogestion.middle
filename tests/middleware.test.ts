@@ -135,10 +135,15 @@ describe("middleware", () => {
     expect(location.searchParams.get("returnTo")).toBe("/marcas");
   });
 
-  it("ruta sin el permiso requerido redirige 308 a /inicio", async () => {
+  it("ruta sin el permiso requerido redirige a /inicio (307, no cacheable por el navegador)", async () => {
     getSession.mockResolvedValue(SESSION);
     const res = await middleware(req("/marcas", JSON.stringify(["leer:clientes"])));
-    expect(res.status).toBe(308);
+    // 307 a propósito, no 308: un 308 es "Permanent Redirect" y los navegadores
+    // lo cachean indefinidamente por URL incluso sin Cache-Control -- un
+    // usuario al que luego SÍ se le otorga el permiso seguiría viendo la
+    // redirección vieja servida desde el caché del navegador, sin tocar
+    // siquiera el servidor, hasta que vacíe el caché a mano.
+    expect(res.status).toBe(307);
     expect(new URL(res.headers.get("location")!).pathname).toBe("/inicio");
   });
 
@@ -151,7 +156,7 @@ describe("middleware", () => {
   it("cookie permissions con JSON corrupto redirige a /inicio en vez de crashear", async () => {
     getSession.mockResolvedValue(SESSION);
     const res = await middleware(req("/marcas", "esto-no-es-json{{{"));
-    expect(res.status).toBe(308);
+    expect(res.status).toBe(307);
     expect(new URL(res.headers.get("location")!).pathname).toBe("/inicio");
   });
 
