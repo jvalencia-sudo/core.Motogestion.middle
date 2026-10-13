@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const getSession = vi.fn();
+const auth0Middleware = vi.fn();
 vi.mock("@/lib/auth0", () => ({
-  auth0: { getSession, middleware: vi.fn() },
+  auth0: { getSession, middleware: auth0Middleware },
 }));
 
 // Con "logged" siempre presente, la rama que llama al backend (/api/auth/login)
@@ -33,6 +34,33 @@ function req(path: string, permissionsCookie?: string) {
 describe("middleware", () => {
   beforeEach(() => {
     getSession.mockReset();
+    auth0Middleware.mockReset();
+  });
+
+  it("/auth/logout borra las cookies propias de la app además de la sesión de Auth0", async () => {
+    const sdkResponse = NextResponse.redirect("http://localhost:3000/");
+    sdkResponse.cookies.set("logged", "true");
+    sdkResponse.cookies.set("permissions", JSON.stringify(["leer:marcas"]));
+    sdkResponse.cookies.set("taller", "Taller Anterior");
+    sdkResponse.cookies.set("perfil", "Mecánico");
+    auth0Middleware.mockResolvedValue(sdkResponse);
+
+    const res = await middleware(req("/auth/logout"));
+
+    for (const name of ["logged", "permissions", "taller", "perfil"]) {
+      const cookie = res.cookies.get(name);
+      expect(cookie?.value).toBe("");
+    }
+  });
+
+  it("otras rutas /auth/ (ej. login) no tocan las cookies de la app", async () => {
+    const sdkResponse = NextResponse.redirect("http://localhost:3000/auth/callback");
+    auth0Middleware.mockResolvedValue(sdkResponse);
+
+    const res = await middleware(req("/auth/login"));
+
+    expect(res).toBe(sdkResponse);
+    expect(res.cookies.get("logged")).toBeUndefined();
   });
 
   it("ruta pública sin sesión pasa sin redirigir (y sin siquiera consultar la sesión)", async () => {

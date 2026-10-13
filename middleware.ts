@@ -5,9 +5,22 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { UserWithPermissions } from "@/lib/types/user";
 import { cookies } from "next/headers";
 
+const APP_COOKIES = ["logged", "permissions", "taller", "perfil"];
+
 export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/auth/")) {
-    return await auth0.middleware(request);
+    const response = await auth0.middleware(request);
+    // El SDK de Auth0 solo limpia su propia sesión; estas cookies las
+    // maneja esta app a mano (más abajo) y sobreviven al logout si no las
+    // borramos aquí. Sin esto, iniciar sesión con OTRA cuenta en el mismo
+    // navegador reutiliza los permisos/taller/perfil de la cuenta anterior,
+    // porque el middleware solo vuelve a pedirlos cuando falta "logged".
+    if (request.nextUrl.pathname === "/auth/logout") {
+      for (const name of APP_COOKIES) {
+        response.cookies.delete(name);
+      }
+    }
+    return response;
   }
 
   // Rewrite all API requests to the backend
