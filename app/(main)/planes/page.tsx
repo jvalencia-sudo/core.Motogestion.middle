@@ -7,7 +7,6 @@ import SubscribeButton from "./subscribe-button";
 
 const FEATURE_LABELS: Record<string, string> = {
   reportes: "Reportes descargables",
-  multi_sucursal: "Multi-sucursal",
 };
 
 function formatoCOP(valor: number) {
@@ -27,10 +26,13 @@ export default async function PlanesPage() {
         title="Planes"
         subtitle="Elige el plan que se ajuste a tu taller. La prueba es gratis por 30 días."
       />
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 max-w-2xl">
         {planes.map((plan) => {
-          const destacado = plan.nombrePlan === "Profesional";
           const gratis = plan.precioPlan <= 0;
+          // Solo hay un plan de pago: ese es el destacado. No se compara por
+          // nombre (antes era === "Profesional", se rompía con cualquier renombre).
+          const destacado = !gratis;
+          const esFundador = !gratis && plan.precioAPagar < plan.precioPlan;
           return (
             <Card
               key={plan.codPlan}
@@ -44,10 +46,21 @@ export default async function PlanesPage() {
               <CardContent className="flex flex-col gap-4 p-6">
                 <div>
                   <h3 className="text-lg font-semibold">{plan.nombrePlan}</h3>
+                  {esFundador && (
+                    <p className="text-sm text-muted-foreground line-through">
+                      {formatoCOP(plan.precioPlan)}
+                    </p>
+                  )}
                   <p className="text-3xl font-extrabold">
-                    {gratis ? "Gratis" : formatoCOP(plan.precioPlan)}
+                    {gratis ? "Gratis" : formatoCOP(plan.precioAPagar)}
                     {!gratis && <span className="text-sm font-normal text-muted-foreground"> /mes</span>}
                   </p>
+                  {esFundador && (
+                    <p className="text-xs font-medium text-orange-500">
+                      Precio fundador: para los primeros 10 talleres, congelado
+                      mientras mantengas tu suscripción
+                    </p>
+                  )}
                 </div>
                 <ul className="flex flex-col gap-2 text-sm">
                   <li className="flex items-center gap-2">

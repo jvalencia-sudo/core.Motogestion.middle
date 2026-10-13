@@ -4,6 +4,7 @@ import {
   BadgeCheck,
   ClipboardList,
   LayoutDashboard,
+  MessageCircle,
   Package,
   ShieldCheck,
   Users,
@@ -18,9 +19,18 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { obtenerPlanes } from "@/app/(main)/planes/actions";
 
 import { HeroVisual } from "./hero-visual";
 import { Reveal } from "./reveal";
+
+function formatoCOP(valor: number) {
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    minimumFractionDigits: 0,
+  }).format(valor);
+}
 
 const BENEFICIOS = [
   {
@@ -73,31 +83,7 @@ const PASOS = [
   },
 ];
 
-const PLANES = [
-  {
-    nombre: "Prueba",
-    precio: "Gratis",
-    detalle: "Para empezar hoy mismo",
-    features: ["Todas las funciones", "1 taller", "Soporte por correo"],
-    destacado: false,
-  },
-  {
-    nombre: "Profesional",
-    precio: "Próximamente",
-    detalle: "Para talleres en crecimiento",
-    features: ["Todo lo de Prueba", "Usuarios ilimitados", "Reportes avanzados"],
-    destacado: true,
-  },
-  {
-    nombre: "Premium",
-    precio: "Próximamente",
-    detalle: "Para varias sucursales",
-    features: ["Todo lo de Profesional", "Multi-sucursal", "Soporte prioritario"],
-    destacado: false,
-  },
-];
-
-const FAQS = [
+const FAQS_BASE = [
   {
     q: "¿Necesito instalar algo?",
     a: "No. MotoGestión funciona 100% en la web; entras desde cualquier navegador.",
@@ -110,13 +96,20 @@ const FAQS = [
     q: "¿Cómo inicio sesión?",
     a: "Con el correo que registras. Puedes entrar con tu cuenta de Google de forma segura.",
   },
-  {
-    q: "¿Tiene costo?",
-    a: "Puedes empezar gratis en modo prueba. Más adelante habrá planes según tu taller.",
-  },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const planes = await obtenerPlanes();
+  const planPago = planes.find((p) => p.precioPlan > 0);
+  const precioFundador = planPago?.precioAPagar ?? 49000;
+  const faqs = [
+    ...FAQS_BASE,
+    {
+      q: "¿Tiene costo?",
+      a: `Puedes probar todo gratis durante 30 días, sin tarjeta. Después, el plan Taller cuesta ${formatoCOP(precioFundador)} al mes para los primeros 10 talleres.`,
+    },
+  ];
+
   return (
     <>
       {/* HERO */}
@@ -241,54 +234,100 @@ export default function LandingPage() {
       <section id="precios" className="py-20">
         <div className="mx-auto max-w-6xl px-4">
           <Reveal className="mx-auto mb-12 max-w-2xl text-center">
-            <h2 className="text-3xl font-bold text-white">Planes simples</h2>
+            <h2 className="text-3xl font-bold text-white">Un plan simple</h2>
             <p className="mt-3 text-slate-400">
-              Empieza gratis. Los planes de pago llegan pronto.
+              Empieza gratis. Un solo plan de pago cuando lo necesites.
             </p>
           </Reveal>
-          <div className="grid gap-6 md:grid-cols-3">
-            {PLANES.map((plan) => (
-              <Card
-                key={plan.nombre}
-                className={
-                  plan.destacado
-                    ? "relative border-orange-500 bg-slate-900 shadow-lg ring-1 ring-orange-500"
-                    : "border-slate-800 bg-slate-900"
-                }
-              >
-                {plan.destacado && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-orange-500 px-3 py-0.5 text-xs font-semibold text-white">
-                    Recomendado
-                  </span>
-                )}
-                <CardContent className="flex flex-col gap-4 p-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">{plan.nombre}</h3>
-                    <p className="text-sm text-slate-400">{plan.detalle}</p>
-                  </div>
-                  <p className="text-3xl font-extrabold text-white">{plan.precio}</p>
-                  <ul className="flex flex-col gap-2 text-sm text-slate-300">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-center gap-2">
-                        <BadgeCheck className="size-4 text-green-500" /> {f}
+          <div className="mx-auto grid max-w-3xl gap-6 md:grid-cols-2">
+            {planes.map((plan) => {
+              const gratis = plan.precioPlan <= 0;
+              const destacado = !gratis;
+              const esFundador = !gratis && plan.precioAPagar < plan.precioPlan;
+              return (
+                <Card
+                  key={plan.codPlan}
+                  className={
+                    destacado
+                      ? "relative border-orange-500 bg-slate-900 shadow-lg ring-1 ring-orange-500"
+                      : "border-slate-800 bg-slate-900"
+                  }
+                >
+                  {destacado && (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-orange-500 px-3 py-0.5 text-xs font-semibold text-white">
+                      Recomendado
+                    </span>
+                  )}
+                  <CardContent className="flex flex-col gap-4 p-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">{plan.nombrePlan}</h3>
+                      <p className="text-sm text-slate-400">
+                        {gratis ? "Para empezar hoy mismo, sin tarjeta" : "Para tu día a día"}
+                      </p>
+                    </div>
+                    <div>
+                      {esFundador && (
+                        <p className="text-sm text-slate-500 line-through">
+                          {formatoCOP(plan.precioPlan)}
+                        </p>
+                      )}
+                      <p className="text-3xl font-extrabold text-white">
+                        {gratis ? "$0" : formatoCOP(plan.precioAPagar)}
+                        {!gratis && <span className="text-sm font-normal text-slate-400"> /mes</span>}
+                      </p>
+                      {gratis && <p className="text-sm text-slate-400">por 30 días</p>}
+                      {esFundador && (
+                        <p className="mt-1 text-xs font-medium text-orange-400">
+                          Precio fundador: para los primeros 10 talleres, congelado
+                          mientras mantengas tu suscripción
+                        </p>
+                      )}
+                    </div>
+                    <ul className="flex flex-col gap-2 text-sm text-slate-300">
+                      <li className="flex items-center gap-2">
+                        <BadgeCheck className="size-4 text-green-500" /> Todas las funciones
                       </li>
-                    ))}
-                  </ul>
-                  <Button
-                    asChild
-                    className={
-                      plan.destacado
-                        ? "bg-orange-500 text-white hover:bg-orange-600"
-                        : "border-slate-700 bg-transparent text-slate-200 hover:bg-slate-800 hover:text-white"
-                    }
-                    variant={plan.destacado ? "default" : "outline"}
-                  >
-                    <Link href="/registro">Empezar gratis</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                      <li className="flex items-center gap-2">
+                        <BadgeCheck className="size-4 text-green-500" />
+                        {plan.maxUsuarios ? `Hasta ${plan.maxUsuarios} usuarios` : "Usuarios ilimitados"}
+                      </li>
+                      {gratis && (
+                        <li className="flex items-center gap-2">
+                          <BadgeCheck className="size-4 text-green-500" /> Sin tarjeta de crédito
+                        </li>
+                      )}
+                    </ul>
+                    <Button
+                      asChild
+                      className={
+                        destacado
+                          ? "bg-orange-500 text-white hover:bg-orange-600"
+                          : "border-slate-700 bg-transparent text-slate-200 hover:bg-slate-800 hover:text-white"
+                      }
+                      variant={destacado ? "default" : "outline"}
+                    >
+                      <Link href="/registro">
+                        {gratis ? "Registrar mi taller" : "Empezar prueba gratis"}
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
+          {process.env.NEXT_PUBLIC_WHATSAPP_CONTACTO && (
+            <p className="mt-8 text-center text-sm text-slate-400">
+              ¿Tienes varias sedes o necesitas algo especial?{" "}
+              <a
+                href={process.env.NEXT_PUBLIC_WHATSAPP_CONTACTO}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-medium text-orange-400 hover:text-orange-300"
+              >
+                <MessageCircle className="size-4" /> Escríbenos por WhatsApp
+              </a>
+            </p>
+          )}
         </div>
       </section>
 
@@ -299,7 +338,7 @@ export default function LandingPage() {
             <h2 className="text-3xl font-bold text-white">Preguntas frecuentes</h2>
           </Reveal>
           <Accordion type="single" collapsible className="w-full">
-            {FAQS.map((f, i) => (
+            {faqs.map((f, i) => (
               <AccordionItem key={f.q} value={`item-${i}`} className="border-slate-800">
                 <AccordionTrigger className="text-left text-white hover:text-orange-400">
                   {f.q}
