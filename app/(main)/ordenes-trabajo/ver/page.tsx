@@ -78,8 +78,8 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
           {orden.estadoOt === "Entregada" && (
             <GenerarPdfButton
               consecutivo={orden.consecutivoOt}
-              tipo="factura"
-              label="Generar Factura"
+              tipo="comprobante"
+              label="Generar Comprobante"
             />
           )}
         </div>

@@ -200,12 +200,13 @@ export async function generarPdfOrdenTrabajo(consecutivo: number) {
 }
 
 /**
- * URL para generar la factura POS de una orden de trabajo. Ver el comentario
- * de generarPdfOrdenTrabajo: misma razón para usar una ruta propia del front.
+ * URL para generar el comprobante de servicio POS de una orden de trabajo.
+ * Ver el comentario de generarPdfOrdenTrabajo: misma razón para usar una
+ * ruta propia del front.
  */
-export async function generarFacturaPdfOrdenTrabajo(consecutivo: number) {
+export async function generarComprobantePdfOrdenTrabajo(consecutivo: number) {
   "use server";
-  return { pdfUrl: `/api/ordenes-trabajo/${consecutivo}/generar-factura` };
+  return { pdfUrl: `/api/ordenes-trabajo/${consecutivo}/generar-comprobante` };
 }
 
 /**

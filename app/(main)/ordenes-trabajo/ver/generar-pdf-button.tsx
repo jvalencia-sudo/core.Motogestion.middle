@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, Loader2, Receipt } from "lucide-react";
-import { generarPdfOrdenTrabajo, generarFacturaPdfOrdenTrabajo } from "../actions";
+import { generarPdfOrdenTrabajo, generarComprobantePdfOrdenTrabajo } from "../actions";
 
 interface GenerarPdfButtonProps {
   consecutivo: number;
-  tipo?: "orden" | "factura";
+  tipo?: "orden" | "comprobante";
   label?: string;
 }
 
@@ -24,8 +24,8 @@ export function GenerarPdfButton({
     setError(undefined);
 
     try {
-      const { pdfUrl } = tipo === "factura"
-        ? await generarFacturaPdfOrdenTrabajo(consecutivo)
+      const { pdfUrl } = tipo === "comprobante"
+        ? await generarComprobantePdfOrdenTrabajo(consecutivo)
         : await generarPdfOrdenTrabajo(consecutivo);
 
       // Ruta propia del front (/api/...), no la URL directa del backend: así
@@ -39,9 +39,9 @@ export function GenerarPdfButton({
     }
   };
 
-  const buttonLabel = label || (tipo === "factura" ? "Generar Factura" : "Generar Orden");
-  const Icon = tipo === "factura" ? Receipt : FileText;
-  const buttonColor = tipo === "factura" ? "bg-blue-600 hover:bg-blue-700" : "bg-green-600 hover:bg-green-700";
+  const buttonLabel = label || (tipo === "comprobante" ? "Generar Comprobante" : "Generar Orden");
+  const Icon = tipo === "comprobante" ? Receipt : FileText;
+  const buttonColor = tipo === "comprobante" ? "bg-blue-600 hover:bg-blue-700" : "bg-green-600 hover:bg-green-700";
 
   return (
     <div>
