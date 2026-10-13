@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Marca } from "@/lib/types/marca";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Pencil, Trash2, ArrowUpDown } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,42 +17,15 @@ import Link from "next/link";
 export const columns: ColumnDef<Marca>[] = [
   {
     accessorKey: "codMar",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 p-0"
-      >
-        Código
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: "Código",
   },
   {
     accessorKey: "nombreMar",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 p-0"
-      >
-        Nombre
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: "Nombre",
   },
   {
     accessorKey: "totalMotos",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 p-0"
-      >
-        Motos
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: "Motos",
   },
   {
     id: "actions",

@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Cliente } from "@/lib/types/cliente";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Pencil, Trash2, ArrowUpDown } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,81 +18,27 @@ import { eliminarCliente } from "./actions";
 export const columns: ColumnDef<Cliente>[] = [
   {
     accessorKey: "documentoCli",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 p-0"
-      >
-        Documento
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: "Documento",
   },
   {
     accessorKey: "nombreCompleto",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 p-0"
-      >
-        Nombre Completo
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: "Nombre Completo",
   },
   {
     accessorKey: "correoCli",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 p-0"
-      >
-        Correo
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: "Correo",
   },
   {
     accessorKey: "telefonoCli",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 p-0"
-      >
-        Teléfono
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: "Teléfono",
   },
   {
     accessorKey: "direccionCli",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 p-0"
-      >
-        Dirección
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: "Dirección",
   },
   {
     accessorKey: "totalMotos",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 p-0"
-      >
-        Motos
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: "Motos",
   },
   {
     id: "actions",
