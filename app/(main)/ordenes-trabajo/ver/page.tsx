@@ -312,7 +312,7 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
                       </p>
                       {detalle.cantidadDeto < 0 && (
                         <p className="text-xs text-green-600 mt-1">
-                          No facturado
+                          No cobrado
                         </p>
                       )}
                     </div>
@@ -330,11 +330,11 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
                     </span>
                   </div>
 
-                  {/* Mostrar productos no facturados si existen */}
+                  {/* Mostrar productos no cobrados si existen */}
                   {orden.detalles.some(d => d.cantidadDeto < 0) && (
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-muted-foreground">
-                        Productos no facturados:
+                        Productos no cobrados:
                       </span>
                       <span className="text-green-600 font-medium">
                         -{formatearMoneda(
@@ -346,10 +346,10 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
                     </div>
                   )}
 
-                  {/* Total a facturar */}
+                  {/* Total a cobrar */}
                   <div className="flex justify-between items-center pt-3 border-t">
                     <div>
-                      <span className="text-lg font-semibold">Total a Facturar:</span>
+                      <span className="text-lg font-semibold">Total a Cobrar:</span>
                       <p className="text-xs text-muted-foreground">
                         {orden.totalItems || 0} producto{(orden.totalItems || 0) !== 1 ? 's' : ''} • Impuestos incluidos
                       </p>

@@ -1217,7 +1217,7 @@ export default function OrdenForm({
                             )}
                             {detalle.seFactura === false && Math.abs(detalle.cantidadDeto) > 0 && (
                               <p className="text-xs text-green-600 mt-1">
-                                No afecta el inventario (no se factura)
+                                No afecta el inventario (no se cobra)
                               </p>
                             )}
                           </div>
@@ -1273,7 +1273,7 @@ export default function OrdenForm({
                             {isEdit ? (
                               <div className="flex items-center gap-3">
                                 <Label htmlFor={`factura-${detalle.id}`} className="text-sm font-medium">
-                                  ¿Se factura?
+                                  ¿Se cobra?
                                 </Label>
                                 <div className="flex items-center gap-2">
                                   <span className={cn(
@@ -1336,7 +1336,7 @@ export default function OrdenForm({
                     {contarProductosFacturables() < detalles.length && (
                       <div className="pt-2 border-t border-primary/20">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Total a facturar:</span>
+                          <span className="text-sm text-muted-foreground">Total a cobrar:</span>
                           <span className="font-semibold text-lg">
                             {new Intl.NumberFormat("es-CO", {
                               style: "currency",
@@ -1346,7 +1346,7 @@ export default function OrdenForm({
                           </span>
                         </div>
                         <p className="text-xs text-green-600 mt-1">
-                          {detalles.length - contarProductosFacturables()} producto{(detalles.length - contarProductosFacturables()) !== 1 ? 's' : ''} no facturado{(detalles.length - contarProductosFacturables()) !== 1 ? 's' : ''}
+                          {detalles.length - contarProductosFacturables()} producto{(detalles.length - contarProductosFacturables()) !== 1 ? 's' : ''} no cobrado{(detalles.length - contarProductosFacturables()) !== 1 ? 's' : ''}
                         </p>
                       </div>
                     )}
