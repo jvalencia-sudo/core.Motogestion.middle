@@ -42,5 +42,4 @@ jobs:
           AUTH0_AUDIENCE: https://ci-build.example.com/api
           AUTH0_SCOPE: "openid profile email"
           BASE_API_URL: https://ci-build.example.com/api
-          NEXT_PUBLIC_API_URL: https://ci-build.example.com
           NEXT_PUBLIC_WHATSAPP_CONTACTO: https://wa.me/573000000000

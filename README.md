@@ -33,8 +33,7 @@ Están documentadas con comentarios en `.env.example`. Resumen:
 |---|---|
 | `APP_BASE_URL` / `AUTH0_BASE_URL` | URL pública de este front. En producción debe ser `https` (Auth0 lo exige). |
 | `AUTH0_DOMAIN`, `AUTH0_ISSUER_BASE_URL`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET`, `AUTH0_SECRET`, `AUTH0_AUDIENCE`, `AUTH0_SCOPE` | Credenciales del tenant de Auth0 (mismo tenant que usa el backend). |
-| `BASE_API_URL` | URL del backend, server-side (a donde el middleware reescribe `/api/*`). |
-| `NEXT_PUBLIC_API_URL` | URL del backend visible desde el cliente (no secreta). |
+| `BASE_API_URL` | URL del backend, server-side (a donde el middleware reescribe `/api/*`). El navegador nunca le pega directo al backend. |
 | `NEXT_PUBLIC_WHATSAPP_CONTACTO` | Link `wa.me/...` del botón de contacto en la landing. |
 | `NEXT_PUBLIC_SENTRY_DSN` | DSN de Sentry (monitoreo de errores). Vacío = deshabilitado, no bloquea nada. |
 | `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` | Solo hacen falta en el build de Vercel, para subir source maps a Sentry. |
