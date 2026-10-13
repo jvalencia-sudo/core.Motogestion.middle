@@ -3,7 +3,6 @@
 import * as React from "react";
 import { Cpu, Package, Bike, Home, type LucideIcon } from "lucide-react";
 
-import { getPermissions } from "@/app/(main)/actions";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import {
@@ -17,6 +16,8 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
+
+import { usePermissions } from "@/hooks/use-permissions";
 
 // Forma cruda: getItem() puede devolver null (permiso ausente) y los hijos aún
 // sin limpiar. clean() la convierte en NavItem, sin nulos en ningún nivel.
@@ -95,13 +96,7 @@ function getMenu(permissions: string[]): NavItem[] {
 
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const [permissions, setPermissions] = React.useState<string[]>([]);
-  React.useEffect(() => {
-    const getP = async () => {
-      setPermissions(await getPermissions());
-    };
-    getP();
-  }, []);
+  const { permissions } = usePermissions();
 
   const items = React.useMemo(() => {
     return getMenu(permissions);
