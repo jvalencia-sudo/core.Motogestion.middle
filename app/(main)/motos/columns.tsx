@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Moto } from "@/lib/types/moto";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Pencil, Trash2, ArrowUpDown } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,94 +18,31 @@ import { eliminarMoto } from "./actions";
 export const columns: ColumnDef<Moto>[] = [
   {
     accessorKey: "placaMot",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 p-0"
-      >
-        Placa
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: "Placa",
   },
   {
     accessorKey: "marca",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 p-0"
-      >
-        Marca
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: "Marca",
   },
   {
     accessorKey: "modeloMot",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 p-0"
-      >
-        Modelo
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: "Modelo",
   },
   {
     accessorKey: "colorMot",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 p-0"
-      >
-        Color
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: "Color",
   },
   {
     accessorKey: "cilindrajeMot",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 p-0"
-      >
-        Cilindraje
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: "Cilindraje",
   },
   {
     accessorKey: "propietario",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 p-0"
-      >
-        Propietario
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: "Propietario",
   },
   {
     accessorKey: "telefonoCli",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-8 p-0"
-      >
-        Teléfono
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: "Teléfono",
   },
   {
     id: "actions",
