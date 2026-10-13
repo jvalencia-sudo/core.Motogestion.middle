@@ -77,7 +77,13 @@ export async function middleware(request: NextRequest) {
   // continuación leen de ahí, no de lo que se le fije a la respuesta: sin
   // esto, la PRIMERA petición tras loguear (o tras cambiar de cuenta/perfil)
   // seguía viendo cookies viejas o vacías hasta que el usuario recargaba.
-  const nuevasCookies: { name: string; value: string; secure?: boolean }[] = [];
+  const nuevasCookies: { name: string; value: string }[] = [];
+  // "Secure" exige HTTPS real. En local (http://localhost) algunos navegadores
+  // /extensiones la descartan igual aunque Chrome trate a localhost como
+  // origen seguro -- antes solo "permissions" la llevaba fija en true (las
+  // otras 3 cookies no), lo que hacía que justo esa cookie se perdiera en
+  // ciertos perfiles de navegador mientras las demás sí llegaban bien.
+  const esHttps = request.nextUrl.protocol === "https:";
 
   // If the user is logged in but the "logged" cookie is not set, authenticate them
   if (!request.cookies.has("logged")) {
@@ -103,11 +109,7 @@ export async function middleware(request: NextRequest) {
 
         nuevasCookies.push(
           { name: "logged", value: "true" },
-          {
-            name: "permissions",
-            value: JSON.stringify(user.permissions),
-            secure: true,
-          },
+          { name: "permissions", value: JSON.stringify(user.permissions) },
         );
         if (user.nombreTal) {
           nuevasCookies.push({ name: "taller", value: user.nombreTal });
@@ -135,7 +137,7 @@ export async function middleware(request: NextRequest) {
       response.cookies.set(cookie.name, cookie.value, {
         httpOnly: true,
         path: "/",
-        secure: cookie.secure,
+        secure: esHttps,
       });
     }
     return response;

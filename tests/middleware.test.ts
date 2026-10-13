@@ -20,7 +20,7 @@ const SESSION = {
 function req(
   path: string,
   permissionsCookie?: string,
-  { logged = true }: { logged?: boolean } = {},
+  { logged = true, https = false }: { logged?: boolean; https?: boolean } = {},
 ) {
   const headers = new Headers();
   const partes: string[] = [];
@@ -29,7 +29,8 @@ function req(
     partes.push(`permissions=${encodeURIComponent(permissionsCookie)}`);
   }
   if (partes.length) headers.set("cookie", partes.join("; "));
-  return new NextRequest(new URL(path, "http://localhost:3000"), { headers });
+  const base = https ? "https://taller.app" : "http://localhost:3000";
+  return new NextRequest(new URL(path, base), { headers });
 }
 
 describe("middleware", () => {
@@ -64,6 +65,29 @@ describe("middleware", () => {
       );
       expect(res.cookies.get("taller")?.value).toBe("Taller X");
       expect(res.cookies.get("perfil")?.value).toBe("Administrador");
+    } finally {
+      vi.unstubAllGlobals();
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("en HTTP (local) las cookies NO van marcadas Secure; en HTTPS sí", async () => {
+    getSession.mockResolvedValue(SESSION);
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ permissions: ["leer:marcas"] }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubEnv("BASE_API_URL", "http://backend.local");
+
+    try {
+      const resHttp = await middleware(req("/inicio", undefined, { logged: false }));
+      expect(resHttp.cookies.get("permissions")?.secure).toBeFalsy();
+
+      const resHttps = await middleware(
+        req("/inicio", undefined, { logged: false, https: true }),
+      );
+      expect(resHttps.cookies.get("permissions")?.secure).toBe(true);
     } finally {
       vi.unstubAllGlobals();
       vi.unstubAllEnvs();
