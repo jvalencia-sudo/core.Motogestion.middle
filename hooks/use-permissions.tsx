@@ -32,5 +32,6 @@ export function usePermissions() {
 
   return {
     hasPermission,
+    permissions: context.permissions,
   };
 }
