@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { obtenerPlanes } from "@/app/(main)/planes/actions";
+import { obtenerPlanesPublico } from "@/app/(main)/planes/actions";
 
 import { HeroVisual } from "./hero-visual";
 import { Reveal } from "./reveal";
@@ -46,7 +46,7 @@ const BENEFICIOS = [
   {
     icon: Package,
     titulo: "Inventario",
-    desc: "Controla tu stock de repuestos y recibe alertas de bajo inventario.",
+    desc: "Controla tu stock de repuestos y mira cuáles están bajos desde el dashboard.",
   },
   {
     icon: LayoutDashboard,
@@ -99,14 +99,22 @@ const FAQS_BASE = [
 ];
 
 export default async function LandingPage() {
-  const planes = await obtenerPlanes();
+  const planes = await obtenerPlanesPublico();
   const planPago = planes.find((p) => p.precioPlan > 0);
-  const precioFundador = planPago?.precioAPagar ?? 49000;
+  const precioAPagar = planPago?.precioAPagar ?? 49000;
+  const precioRegular = planPago?.precioPlan ?? 69000;
+  // precioAPagar < precioPlan solo mientras queden cupos de fundador (misma
+  // regla que usan las tarjetas de precio más abajo). Si ya se acabaron, el
+  // backend devuelve precioAPagar === precioPlan y hay que dejar de hablar
+  // de "los primeros 10 talleres" -- ya no aplica y sería falso.
+  const hayFundador = precioAPagar < precioRegular;
   const faqs = [
     ...FAQS_BASE,
     {
       q: "¿Tiene costo?",
-      a: `Puedes probar todo gratis durante 30 días, sin tarjeta. Después, el plan Taller cuesta ${formatoCOP(precioFundador)} al mes para los primeros 10 talleres.`,
+      a: hayFundador
+        ? `Puedes probar todo gratis durante 30 días, sin tarjeta. Después, el plan Taller cuesta ${formatoCOP(precioAPagar)} al mes para los primeros 10 talleres.`
+        : `Puedes probar todo gratis durante 30 días, sin tarjeta. Después, el plan Taller cuesta ${formatoCOP(precioRegular)} al mes.`,
     },
   ];
 
