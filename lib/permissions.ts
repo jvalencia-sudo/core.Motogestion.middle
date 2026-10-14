@@ -37,15 +37,6 @@ export const PERMISSIONS = [
   { path: "/ordenes-trabajo/ver$", permissions: ["leer:ordenes-trabajo"] },
   { path: "/ordenes-trabajo$", permissions: ["leer:ordenes-trabajo"] },
 
-  // Roles
-  { path: "/roles/crear$", permissions: ["crear:roles"] },
-  { path: "/roles/editar$", permissions: ["actualizar:roles"] },
-  { path: "/roles$", permissions: ["leer:roles"] },
-
-  // Vistas
-  { path: "/vistas/crear$", permissions: ["crear:vistas"] },
-  { path: "/vistas$", permissions: ["leer:vistas"] },
-
   // Usuarios
   { path: "/users/crear$", permissions: ["crear:users"] },
   { path: "/users/editar$", permissions: ["actualizar:users"] },

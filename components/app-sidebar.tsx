@@ -62,8 +62,6 @@ function getMenu(permissions: string[]): NavItem[] {
   const menu = [
     getItem(permissions, "Administrador", "leer:users", "", Cpu, [
       getItem(permissions, "Usuarios", "leer:users", "/users"),
-      getItem(permissions, "Roles", "leer:roles", "/roles"),
-      getItem(permissions, "Vistas", "leer:vistas", "/vistas"),
       getItem(permissions, "Perfiles y Permisos", "leer:perfiles-permisos", "/perfiles-permisos"),
     ]),
       getItem(permissions, "Taller", "Ver Productos", "", Package, [
