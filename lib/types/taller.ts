@@ -10,11 +10,13 @@ export interface TallerConfig {
   tarifaHoraPred: number;
 }
 
-// Estado de suscripción del taller (banner/gating).
+// Estado de suscripción del taller (banner/gating y vista de Suscripción).
 export interface TallerSuscripcion {
   estado: "prueba" | "activo" | "suspendido";
   plan: string | null;
+  precio: number | null;
   fechaFin: string | null;
   diasRestantes: number | null;
   vencido: boolean;
+  miembroDesde: string | null;
 }

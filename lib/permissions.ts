@@ -64,4 +64,9 @@ export const PERMISSIONS = [
   { path: "/planes/gracias$", permissions: ["leer:productos"] },
   { path: "/planes$", permissions: ["leer:productos"] },
   { path: "/configuracion$", permissions: ["leer:productos"] },
+
+  // Suscripción (estado del plan + historial de pagos): mismo nivel que el
+  // resto de Administración -- el backend ya exige Admin para el historial
+  // de pagos (GET /suscripciones/pagos vía require_admin).
+  { path: "/suscripcion$", permissions: ["leer:users"] },
 ];
