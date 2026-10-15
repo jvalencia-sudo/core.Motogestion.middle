@@ -179,4 +179,17 @@ describe("middleware", () => {
       expect(res.headers.get("location")).toBeNull();
     },
   );
+
+  it("/suscripcion es accesible con leer:users", async () => {
+    getSession.mockResolvedValue(SESSION);
+    const res = await middleware(req("/suscripcion", JSON.stringify(["leer:users"])));
+    expect(res.headers.get("location")).toBeNull();
+  });
+
+  it("/suscripcion redirige a /inicio sin leer:users", async () => {
+    getSession.mockResolvedValue(SESSION);
+    const res = await middleware(req("/suscripcion", JSON.stringify(["leer:productos"])));
+    expect(res.status).toBe(307);
+    expect(new URL(res.headers.get("location")!).pathname).toBe("/inicio");
+  });
 });

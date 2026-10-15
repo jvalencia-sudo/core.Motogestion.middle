@@ -63,6 +63,7 @@ function getMenu(permissions: string[]): NavItem[] {
     getItem(permissions, "Administrador", "leer:users", "", Cpu, [
       getItem(permissions, "Usuarios", "leer:users", "/users"),
       getItem(permissions, "Perfiles y Permisos", "leer:perfiles-permisos", "/perfiles-permisos"),
+      getItem(permissions, "Suscripción", "leer:users", "/suscripcion"),
     ]),
       getItem(permissions, "Taller", "Ver Productos", "", Package, [
           getItem(permissions, "Productos", "Ver Productos", "/productos"),
