@@ -9,7 +9,7 @@ export async function obtenerSuscripcion(): Promise<TallerSuscripcion | null> {
   return resp.data ?? null;
 }
 
-export async function obtenerHistorialPagos(): Promise<Pago[]> {
+export async function obtenerHistorialPagos(): Promise<{ pagos: Pago[]; error: boolean }> {
   const resp = await appFetch<Pago[]>("/api/suscripciones/pagos");
-  return resp.data || [];
+  return { pagos: resp.data ?? [], error: resp.error !== undefined };
 }
