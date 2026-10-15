@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { CalendarClock } from "lucide-react";
 
 import PageHeader from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -47,9 +49,34 @@ const PAGO_ESTADO: Record<
   DECLINED: { label: "Rechazado", className: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30" },
   PENDING: { label: "Pendiente", className: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30" },
 };
+const PAGO_NO_COMPLETADO = {
+  label: "No completado",
+  className: "bg-muted text-muted-foreground border-border",
+};
+
+// Un pago PENDING de hace más de 1 día es un checkout que se abrió y nunca se
+// terminó -- no va a cambiar de estado solo, así que mostrarlo como
+// "Pendiente" indefinidamente confunde (parece que algo quedó colgado).
+function esPendienteAbandonado(pago: { estado: string; fecha: string }) {
+  if (pago.estado !== "PENDING") return false;
+  const fechaPago = new Date(pago.fecha.replace(" ", "T"));
+  const unDiaMs = 24 * 60 * 60 * 1000;
+  return Date.now() - fechaPago.getTime() > unDiaMs;
+}
+
+// La suscripción nunca se renueva sola (Wompi solo cobra una vez por
+// checkout): el dueño siempre tiene que volver a pagar manualmente cuando
+// está por vencer, vencida o suspendida.
+function necesitaPagar(suscripcion: { estado: string; diasRestantes: number | null }) {
+  if (suscripcion.estado === "prueba" || suscripcion.estado === "suspendido") return true;
+  if (suscripcion.estado === "activo" && suscripcion.diasRestantes !== null) {
+    return suscripcion.diasRestantes <= 5;
+  }
+  return false;
+}
 
 export default async function SuscripcionPage() {
-  const [suscripcion, pagos] = await Promise.all([
+  const [suscripcion, { pagos, error: errorPagos }] = await Promise.all([
     obtenerSuscripcion(),
     obtenerHistorialPagos(),
   ]);
@@ -71,16 +98,25 @@ export default async function SuscripcionPage() {
                   {suscripcion.plan ?? "Prueba gratis"}
                 </p>
               </div>
-              <Badge
-                variant={suscripcion.estado === "activo" ? "default" : "secondary"}
-                className={
-                  suscripcion.estado === "suspendido"
-                    ? "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30"
-                    : ""
-                }
-              >
-                {ESTADO_LABEL[suscripcion.estado] ?? suscripcion.estado}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant={suscripcion.estado === "activo" ? "default" : "secondary"}
+                  className={
+                    suscripcion.estado === "suspendido"
+                      ? "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30"
+                      : ""
+                  }
+                >
+                  {ESTADO_LABEL[suscripcion.estado] ?? suscripcion.estado}
+                </Badge>
+                {necesitaPagar(suscripcion) && (
+                  <Button asChild size="sm">
+                    <Link href="/planes">
+                      {suscripcion.estado === "prueba" ? "Pagar" : "Renovar"}
+                    </Link>
+                  </Button>
+                )}
+              </div>
             </div>
 
             <div className="grid gap-3 text-sm sm:grid-cols-2">
@@ -106,7 +142,7 @@ export default async function SuscripcionPage() {
                 <div>
                   <p className="text-muted-foreground flex items-center gap-1">
                     <CalendarClock className="size-3.5" />
-                    {suscripcion.estado === "activo" ? "Próxima renovación" : "Vence"}
+                    {suscripcion.estado === "activo" ? "Activo hasta" : "Vence"}
                   </p>
                   <p className="font-medium">{formatoFecha(suscripcion.fechaFin)}</p>
                 </div>
@@ -124,7 +160,11 @@ export default async function SuscripcionPage() {
 
       <div className="mt-8">
         <h2 className="mb-3 text-lg font-semibold">Historial de pagos</h2>
-        {pagos.length === 0 ? (
+        {errorPagos ? (
+          <p className="text-sm text-destructive">
+            No se pudo cargar el historial de pagos. Intenta recargar la página.
+          </p>
+        ) : pagos.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Todavía no hay pagos registrados para este taller.
           </p>
@@ -141,10 +181,9 @@ export default async function SuscripcionPage() {
               </TableHeader>
               <TableBody>
                 {pagos.map((pago) => {
-                  const estado = PAGO_ESTADO[pago.estado] ?? {
-                    label: pago.estado,
-                    className: "",
-                  };
+                  const estado = esPendienteAbandonado(pago)
+                    ? PAGO_NO_COMPLETADO
+                    : (PAGO_ESTADO[pago.estado] ?? { label: pago.estado, className: "" });
                   return (
                     <TableRow key={pago.codPago}>
                       <TableCell>{formatoFecha(pago.fecha)}</TableCell>

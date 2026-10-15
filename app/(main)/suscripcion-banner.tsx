@@ -46,6 +46,29 @@ export default async function SuscripcionBanner() {
     );
   }
 
+  // El plan no se renueva solo (Wompi cobra una vez por checkout, no hay
+  // suscripción recurrente): avisar unos días antes de que lo bloqueen a
+  // mitad de jornada por no haber pagado de nuevo a tiempo.
+  if (data.estado === "activo" && data.diasRestantes !== null && data.diasRestantes <= 5) {
+    return (
+      <Bar tone="warning">
+        <Clock className="size-4 shrink-0" />
+        <span>
+          Tu plan vence{" "}
+          {data.diasRestantes <= 0
+            ? "hoy"
+            : data.diasRestantes === 1
+              ? "en 1 día"
+              : `en ${data.diasRestantes} días`}{" "}
+          · no se renueva solo, debes pagar de nuevo para seguir sin interrupciones.
+        </span>
+        <Link href="/planes" className="ml-auto font-semibold underline">
+          Renovar
+        </Link>
+      </Bar>
+    );
+  }
+
   return null;
 }
 
