@@ -165,4 +165,18 @@ describe("middleware", () => {
     const res = await middleware(req("/inicio"));
     expect(res.headers.get("location")).toBeNull();
   });
+
+  // F0-12: /planes, /planes/gracias y /configuracion no tenían ninguna entrada
+  // en PERMISSIONS -- el middleware no encontraba regla para esas rutas y
+  // redirigía a /inicio para CUALQUIER usuario, incluyendo Admin. Eso bloqueaba
+  // por completo llegar a pagar un plan (el botón "Ver planes" no llevaba a
+  // ningún lado).
+  it.each(["/planes", "/planes/gracias", "/configuracion"])(
+    "%s es accesible con leer:productos (antes redirigía a /inicio para todos)",
+    async (path) => {
+      getSession.mockResolvedValue(SESSION);
+      const res = await middleware(req(path, JSON.stringify(["leer:productos"])));
+      expect(res.headers.get("location")).toBeNull();
+    },
+  );
 });
