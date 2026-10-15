@@ -53,4 +53,15 @@ export const PERMISSIONS = [
   { path: "/reclamos/editar$", permissions: ["actualizar:reclamos"] },
   { path: "/reclamos/ver$", permissions: ["leer:reclamos"] },
   { path: "/reclamos$", permissions: ["leer:reclamos"] },
+
+  // Planes y Configuración: ver el estado de la suscripción y pagar/configurar
+  // no están ligados a un recurso propio del catálogo de permisos. El backend
+  // ya exige Admin para las acciones que mutan algo (POST /checkout, PUT
+  // /talleres/config vía require_admin) -- acá solo se gatea el ACCESO a la
+  // pantalla, reusando "leer:productos" porque lo tienen por defecto los 3
+  // roles (Admin/Mecánico/Recepcionista). Sin esta entrada, el middleware no
+  // encontraba regla para estas rutas y redirigía a /inicio para cualquiera.
+  { path: "/planes/gracias$", permissions: ["leer:productos"] },
+  { path: "/planes$", permissions: ["leer:productos"] },
+  { path: "/configuracion$", permissions: ["leer:productos"] },
 ];
