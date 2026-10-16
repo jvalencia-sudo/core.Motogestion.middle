@@ -52,14 +52,13 @@ export const PERMISSIONS = [
   { path: "/reclamos$", permissions: ["leer:reclamos"] },
 
   // Planes: ver el estado de la suscripción y pagar no está ligado a un
-  // recurso propio del catálogo de permisos. El backend ya exige Admin para
-  // las acciones que mutan algo (POST /checkout vía require_admin) -- acá
-  // solo se gatea el ACCESO a la pantalla, reusando "leer:productos" porque
-  // lo tienen por defecto los 3 roles (Admin/Mecánico/Recepcionista). Sin
-  // esta entrada, el middleware no encontraba regla para estas rutas y
-  // redirigía a /inicio para cualquiera.
-  { path: "/planes/gracias$", permissions: ["leer:productos"] },
-  { path: "/planes$", permissions: ["leer:productos"] },
+  // recurso propio del catálogo de permisos. El backend exige Admin para
+  // POST /checkout (require_admin) -- "leer:users" es el mismo nivel que
+  // /mi-taller y /suscripcion (acciones de Administración), no "leer:productos"
+  // (lo tienen los 3 roles, pero un Mecánico/Recepcionista vería el botón
+  // "Pagar" y el backend se lo rechazaría).
+  { path: "/planes/gracias$", permissions: ["leer:users"] },
+  { path: "/planes$", permissions: ["leer:users"] },
 
   // Mi taller (parámetros del taller, ej. mano de obra) y Suscripción (estado
   // del plan + historial de pagos): mismo nivel, ambas dentro del grupo
