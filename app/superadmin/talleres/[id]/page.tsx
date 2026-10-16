@@ -160,8 +160,8 @@ export default async function TallerDetallePage({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {usuarios.map((usuario) => (
-                    <TableRow key={usuario.documentoUsu}>
+                  {usuarios.map((usuario, i) => (
+                    <TableRow key={`${usuario.nombreCompleto}-${i}`}>
                       <TableCell>{usuario.nombreCompleto}</TableCell>
                       <TableCell>{usuario.rol}</TableCell>
                       <TableCell>{usuario.ultimoIngreso ?? "Nunca"}</TableCell>
