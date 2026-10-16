@@ -51,19 +51,21 @@ export const PERMISSIONS = [
   { path: "/reclamos/ver$", permissions: ["leer:reclamos"] },
   { path: "/reclamos$", permissions: ["leer:reclamos"] },
 
-  // Planes y Configuración: ver el estado de la suscripción y pagar/configurar
-  // no están ligados a un recurso propio del catálogo de permisos. El backend
-  // ya exige Admin para las acciones que mutan algo (POST /checkout, PUT
-  // /talleres/config vía require_admin) -- acá solo se gatea el ACCESO a la
-  // pantalla, reusando "leer:productos" porque lo tienen por defecto los 3
-  // roles (Admin/Mecánico/Recepcionista). Sin esta entrada, el middleware no
-  // encontraba regla para estas rutas y redirigía a /inicio para cualquiera.
+  // Planes: ver el estado de la suscripción y pagar no está ligado a un
+  // recurso propio del catálogo de permisos. El backend ya exige Admin para
+  // las acciones que mutan algo (POST /checkout vía require_admin) -- acá
+  // solo se gatea el ACCESO a la pantalla, reusando "leer:productos" porque
+  // lo tienen por defecto los 3 roles (Admin/Mecánico/Recepcionista). Sin
+  // esta entrada, el middleware no encontraba regla para estas rutas y
+  // redirigía a /inicio para cualquiera.
   { path: "/planes/gracias$", permissions: ["leer:productos"] },
   { path: "/planes$", permissions: ["leer:productos"] },
-  { path: "/configuracion$", permissions: ["leer:productos"] },
 
-  // Suscripción (estado del plan + historial de pagos): mismo nivel que el
-  // resto de Administración -- el backend ya exige Admin para el historial
-  // de pagos (GET /suscripciones/pagos vía require_admin).
+  // Mi taller (parámetros del taller, ej. mano de obra) y Suscripción (estado
+  // del plan + historial de pagos): mismo nivel, ambas dentro del grupo
+  // "Administrador" del menú -- el backend ya exige Admin para las acciones
+  // que mutan algo (PUT /talleres/config, GET /suscripciones/pagos, ambas vía
+  // require_admin), acá solo se gatea el ACCESO a la pantalla.
+  { path: "/mi-taller$", permissions: ["leer:users"] },
   { path: "/suscripcion$", permissions: ["leer:users"] },
 ];

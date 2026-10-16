@@ -43,6 +43,9 @@ next-env.d.ts
 
 #IDE
 .idea/
+
+# Notas locales para otra IA/herramienta, no versionadas
+CLAUDE.md
 !.env.example
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*

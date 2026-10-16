@@ -173,12 +173,12 @@ describe("middleware", () => {
     expect(res.headers.get("location")).toBeNull();
   });
 
-  // F0-12: /planes, /planes/gracias y /configuracion no tenían ninguna entrada
-  // en PERMISSIONS -- el middleware no encontraba regla para esas rutas y
-  // redirigía a /inicio para CUALQUIER usuario, incluyendo Admin. Eso bloqueaba
-  // por completo llegar a pagar un plan (el botón "Ver planes" no llevaba a
+  // F0-12: /planes y /planes/gracias no tenían ninguna entrada en PERMISSIONS
+  // -- el middleware no encontraba regla para esas rutas y redirigía a
+  // /inicio para CUALQUIER usuario, incluyendo Admin. Eso bloqueaba por
+  // completo llegar a pagar un plan (el botón "Ver planes" no llevaba a
   // ningún lado).
-  it.each(["/planes", "/planes/gracias", "/configuracion"])(
+  it.each(["/planes", "/planes/gracias"])(
     "%s es accesible con leer:productos (antes redirigía a /inicio para todos)",
     async (path) => {
       getSession.mockResolvedValue(SESSION);
@@ -186,6 +186,23 @@ describe("middleware", () => {
       expect(res.headers.get("location")).toBeNull();
     },
   );
+
+  // F0-13 (ext): "Configuración" vuelve al menú como "Mi taller", dentro del
+  // grupo Administrador -- mismo permiso que sus hermanos (Usuarios y roles,
+  // Suscripción), ya no "leer:productos" (el backend siempre exigió Admin
+  // para esta pantalla vía require_admin, el middleware ahora lo refleja).
+  it("/mi-taller es accesible con leer:users", async () => {
+    getSession.mockResolvedValue(SESSION);
+    const res = await middleware(req("/mi-taller", JSON.stringify(["leer:users"])));
+    expect(res.headers.get("location")).toBeNull();
+  });
+
+  it("/mi-taller redirige a /inicio sin leer:users", async () => {
+    getSession.mockResolvedValue(SESSION);
+    const res = await middleware(req("/mi-taller", JSON.stringify(["leer:productos"])));
+    expect(res.status).toBe(307);
+    expect(new URL(res.headers.get("location")!).pathname).toBe("/inicio");
+  });
 
   it("/suscripcion es accesible con leer:users", async () => {
     getSession.mockResolvedValue(SESSION);
