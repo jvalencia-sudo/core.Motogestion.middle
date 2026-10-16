@@ -22,7 +22,11 @@ const SESSION = {
 function req(
   path: string,
   permissionsCookie?: string,
-  { logged = true, https = false }: { logged?: boolean; https?: boolean } = {},
+  {
+    logged = true,
+    https = false,
+    superadmin = false,
+  }: { logged?: boolean; https?: boolean; superadmin?: boolean } = {},
 ) {
   const headers = new Headers();
   const partes: string[] = [];
@@ -30,6 +34,7 @@ function req(
   if (permissionsCookie !== undefined) {
     partes.push(`permissions=${encodeURIComponent(permissionsCookie)}`);
   }
+  if (superadmin) partes.push("superadmin=true");
   if (partes.length) headers.set("cookie", partes.join("; "));
   const base = https ? "https://taller.app" : "http://localhost:3000";
   return new NextRequest(new URL(path, base), { headers });
@@ -208,6 +213,55 @@ describe("middleware", () => {
     const res = await middleware(req("/usuarios-roles", JSON.stringify(["leer:productos"])));
     expect(res.status).toBe(307);
     expect(new URL(res.headers.get("location")!).pathname).toBe("/inicio");
+  });
+
+  // F0-14: /superadmin es una sección aislada, todo-o-nada -- no usa PERMISSIONS
+  // (esa tabla es "accion:recurso" por taller; esto es una marca de plataforma).
+  it("/superadmin sin la cookie superadmin redirige a /inicio", async () => {
+    getSession.mockResolvedValue(SESSION);
+    const res = await middleware(req("/superadmin", JSON.stringify(["leer:users"])));
+    expect(res.status).toBe(307);
+    expect(new URL(res.headers.get("location")!).pathname).toBe("/inicio");
+  });
+
+  it("/superadmin con la cookie superadmin pasa (sin importar los permisos de taller)", async () => {
+    getSession.mockResolvedValue(SESSION);
+    const res = await middleware(req("/superadmin", undefined, { superadmin: true }));
+    expect(res.headers.get("location")).toBeNull();
+  });
+
+  it("/superadmin/talleres con la cookie superadmin también pasa", async () => {
+    getSession.mockResolvedValue(SESSION);
+    const res = await middleware(req("/superadmin/talleres", undefined, { superadmin: true }));
+    expect(res.headers.get("location")).toBeNull();
+  });
+
+  it("/inicio con la cookie superadmin redirige a /superadmin", async () => {
+    getSession.mockResolvedValue(SESSION);
+    const res = await middleware(req("/inicio", undefined, { superadmin: true }));
+    expect(res.status).toBe(307);
+    expect(new URL(res.headers.get("location")!).pathname).toBe("/superadmin");
+  });
+
+  it("login recién hecho: esSuperAdmin en la respuesta deja la cookie superadmin lista para ESTE mismo request", async () => {
+    getSession.mockResolvedValue(SESSION);
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ permissions: [], esSuperAdmin: true }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubEnv("BASE_API_URL", "http://backend.local");
+
+    try {
+      const res = await middleware(req("/inicio", undefined, { logged: false }));
+      expect(res.cookies.get("superadmin")?.value).toBe("true");
+      // Y ya redirige a /superadmin en esa misma petición, sin esperar la próxima.
+      expect(res.status).toBe(307);
+      expect(new URL(res.headers.get("location")!).pathname).toBe("/superadmin");
+    } finally {
+      vi.unstubAllGlobals();
+      vi.unstubAllEnvs();
+    }
   });
 });
 
