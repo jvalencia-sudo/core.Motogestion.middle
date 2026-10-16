@@ -10,25 +10,10 @@ export type PerfilDetallado = {
     codPrf: number;
     nombrePrf: string;
     descripcionPrf: string;
+    codRolPrf: number;
+    codEstPrf: number;
     nombreEstPrf: string;
     nombreRolPrf: string;
+    numUsuarios: number;
 };
 
-export type PerfilCreateRequest = {
-    nombrePrf: string;
-    descripcionPrf: string;
-    codRolPrf: number;
-    codEstPrf?: number;
-};
-
-export type PerfilUpdateRequest = {
-    codPrf: number;
-    nombrePrf: string;
-    descripcionPrf: string;
-    codRolPrf: number;
-};
-
-export type CambiarEstadoPerfilRequest = {
-    codPrf: number;
-    codEstPrf: number;
-};

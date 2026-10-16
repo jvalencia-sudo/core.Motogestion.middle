@@ -32,7 +32,8 @@ export type UserListResponse = {
 };
 
 /**
- * Request para crear un nuevo usuario (POST /api/admin/users)
+ * Request para crear un nuevo usuario (POST /api/admin/users). Solo se pide el
+ * perfil (codPrfUsu): el backend deriva el rol global de ese perfil (F0-13).
  */
 export type CreateUserRequest = {
   documentoUsu: string;
@@ -42,14 +43,13 @@ export type CreateUserRequest = {
   correoUsu: string;
   password: string; // Mínimo 8 caracteres
   codPrfUsu: number;
-  codRolPrfUsu: number;
   codTipoUsu?: number; // Default 1
   codEstUsu?: number; // Default 1
 };
 
 /**
  * Request para actualizar un usuario (PUT /api/admin/users/{documento_usu})
- * Todos los campos son opcionales
+ * Todos los campos son opcionales. Solo se pide el perfil (el rol se deriva).
  */
 export type UpdateUserRequest = {
   documentoUsu?: string;
@@ -58,7 +58,6 @@ export type UpdateUserRequest = {
   apellido2Usu?: string;
   correoUsu?: string;
   codPrfUsu?: number;
-  codRolPrfUsu?: number;
   codTipoUsu?: number;
   codEstUsu?: number;
 };
@@ -71,11 +70,12 @@ export type ChangePasswordRequest = {
 };
 
 /**
- * Request para actualizar perfil y rol (PUT /api/admin/users/{documento_usu}/profile)
+ * Request para actualizar el rol (perfil) de un usuario
+ * (PUT /api/admin/users/{documento_usu}/profile). El backend deriva el rol
+ * global del perfil elegido.
  */
 export type UpdateProfileRequest = {
   codPrfUsu: number;
-  codRolPrfUsu: number;
 };
 
 /**

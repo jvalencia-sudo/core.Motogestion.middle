@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Cpu, Package, Bike, Home, type LucideIcon } from "lucide-react";
+import { Home, type LucideIcon } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -18,16 +18,7 @@ import {
 import Link from "next/link";
 
 import { usePermissions } from "@/hooks/use-permissions";
-
-// Forma cruda: getItem() puede devolver null (permiso ausente) y los hijos aún
-// sin limpiar. clean() la convierte en NavItem, sin nulos en ningún nivel.
-type RawNavItem = {
-  title: string;
-  url: string;
-  icon?: LucideIcon;
-  isActive?: boolean;
-  items?: Array<RawNavItem | null>;
-};
+import { MENU, type MenuItem } from "@/lib/menu";
 
 type NavItem = {
   title: string;
@@ -37,60 +28,25 @@ type NavItem = {
   items?: NavItem[];
 };
 
-function getItem(
-  permissions: string[],
-  title: string,
-  permission: string,
-  url?: string,
-  icon?: LucideIcon,
-  items?: Array<RawNavItem | null>,
-): RawNavItem | null {
-  //We check if the permission has a : because it's a group if it doesn't
-  if (permission.includes(":") && !permissions.includes(permission))
-    return null;
-
-  return {
-    icon,
-    title,
-    items,
-    url: url ?? "",
-  };
+// Una hoja (tiene url) SIEMPRE exige su permiso real; un grupo (sin url, con
+// items) no tiene permiso propio, se queda solo si le sobrevive algún hijo.
+// Ya no existe la regla vieja de "sin ':' se muestra siempre" (F0-13).
+function filtrarMenu(items: MenuItem[], permissions: string[]): NavItem[] {
+  return items
+    .map((item): NavItem | null => {
+      if (item.items) {
+        const hijos = filtrarMenu(item.items, permissions);
+        if (hijos.length === 0) return null;
+        return { title: item.title, url: "", icon: item.icon, items: hijos };
+      }
+      if (!item.permission || !permissions.includes(item.permission)) return null;
+      return { title: item.title, url: item.url ?? "", icon: item.icon };
+    })
+    .filter((i): i is NavItem => i !== null);
 }
 
-//TODO: Add active state
 function getMenu(permissions: string[]): NavItem[] {
-  const menu = [
-    getItem(permissions, "Administrador", "leer:users", "", Cpu, [
-      getItem(permissions, "Usuarios", "leer:users", "/users"),
-      getItem(permissions, "Perfiles y Permisos", "leer:perfiles-permisos", "/perfiles-permisos"),
-      getItem(permissions, "Suscripción", "leer:users", "/suscripcion"),
-    ]),
-      getItem(permissions, "Taller", "Ver Productos", "", Package, [
-          getItem(permissions, "Productos", "Ver Productos", "/productos"),
-          getItem(permissions, "Órdenes de Trabajo", "Ver Órdenes Trabajo", "/ordenes-trabajo"),
-          getItem(permissions, "Tablero", "leer:ordenes-trabajo", "/tablero"),
-          getItem(permissions, "Reclamos", "leer:reclamos", "/reclamos"),
-          getItem(permissions, "Configuración", "Ver Productos", "/configuracion"),
-          getItem(permissions, "Planes", "Ver Productos", "/planes"),
-      ]),
-      getItem(permissions, "Gestión de Motos", "Ver Clientes", "", Bike, [
-          getItem(permissions, "Clientes", "Ver Clientes", "/clientes"),
-          getItem(permissions, "Motos", "Ver Motos", "/motos"),
-          getItem(permissions, "Marcas", "Ver Motos", "/marcas"),
-      ]),
-  ];
-
-  // 🧹 Limpiar nulos tanto en el nivel principal como en los hijos
-  const clean = (items: Array<RawNavItem | null>): NavItem[] =>
-      items
-          .filter((i): i is RawNavItem => i !== null)
-          .map((i) => ({
-            ...i,
-            items: i.items ? clean(i.items) : undefined,
-          }))
-          .filter((i) => !i.items || i.items.length > 0);
-
-  return clean(menu);
+  return filtrarMenu(MENU, permissions);
 }
 
 

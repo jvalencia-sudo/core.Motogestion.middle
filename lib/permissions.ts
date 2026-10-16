@@ -37,16 +37,13 @@ export const PERMISSIONS = [
   { path: "/ordenes-trabajo/ver$", permissions: ["leer:ordenes-trabajo"] },
   { path: "/ordenes-trabajo$", permissions: ["leer:ordenes-trabajo"] },
 
-  // Usuarios
-  { path: "/users/crear$", permissions: ["crear:users"] },
-  { path: "/users/editar$", permissions: ["actualizar:users"] },
-  { path: "/users/resetear-contrasena$", permissions: ["actualizar:users"] },
-  { path: "/users$", permissions: ["leer:users"] },
-
-  // Perfiles y Permisos (asignar permisos a perfiles)
-  { path: "/perfiles-permisos/crear$", permissions: ["crear:perfiles-permisos"] },
-  { path: "/perfiles-permisos/editar$", permissions: ["actualizar:perfiles-permisos"] },
-  { path: "/perfiles-permisos$", permissions: ["leer:perfiles-permisos"] },
+  // Usuarios y roles (F0-13: una sola pantalla con 2 pestañas, reemplaza
+  // /users y /perfiles-permisos -- editar la matriz de un rol exige el mismo
+  // permiso que gestionar perfiles-permisos, no uno nuevo).
+  { path: "/usuarios-roles/crear$", permissions: ["crear:users"] },
+  { path: "/usuarios-roles/editar$", permissions: ["actualizar:users"] },
+  { path: "/usuarios-roles/resetear-contrasena$", permissions: ["actualizar:users"] },
+  { path: "/usuarios-roles$", permissions: ["leer:users", "leer:perfiles-permisos"] },
 
   // Reclamos
   { path: "/reclamos/crear$", permissions: ["crear:reclamos"] },
