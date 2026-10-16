@@ -22,6 +22,7 @@ export const MENU: MenuItem[] = [
     title: "Administrador",
     icon: Cpu,
     items: [
+      { title: "Mi taller", url: "/mi-taller", permission: "leer:users" },
       { title: "Usuarios y roles", url: "/usuarios-roles", permission: "leer:users" },
       { title: "Suscripción", url: "/suscripcion", permission: "leer:users" },
     ],
@@ -34,10 +35,10 @@ export const MENU: MenuItem[] = [
       { title: "Órdenes de Trabajo", url: "/ordenes-trabajo", permission: "leer:ordenes-trabajo" },
       { title: "Tablero", url: "/tablero", permission: "leer:ordenes-trabajo" },
       { title: "Reclamos", url: "/reclamos", permission: "leer:reclamos" },
-      // Configuración y Planes se sacaron del menú a pedido del usuario (no
-      // van en el módulo de Taller). Las rutas siguen vivas y gateadas en
-      // lib/permissions.ts -- se llega a ellas por otros lugares (el banner
-      // de suscripción enlaza a /planes), solo no tienen entrada en el menú.
+      // Planes se sacó del menú a pedido del usuario (no va en el módulo de
+      // Taller). La ruta sigue viva y gateada en lib/permissions.ts -- se
+      // llega a ella por otro lugar (el banner de suscripción enlaza a
+      // /planes), solo no tiene entrada en el menú.
     ],
   },
   {

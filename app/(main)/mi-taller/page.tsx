@@ -3,15 +3,15 @@ import { obtenerConfigTaller } from "./actions";
 import ConfigForm from "./config-form";
 import { TallerConfig } from "@/lib/types/taller";
 
-export default async function ConfiguracionPage() {
+export default async function MiTallerPage() {
   const config: TallerConfig =
     (await obtenerConfigTaller()) ?? { modoManoObra: "HORAS", tarifaHoraPred: 0 };
 
   return (
     <>
       <PageHeader
-        title="Configuración"
-        subtitle="Ajustes del taller: cómo se cobra la mano de obra."
+        title="Mi taller"
+        subtitle="Parámetros y resumen general de tu taller."
       />
       <ConfigForm config={config} />
     </>
