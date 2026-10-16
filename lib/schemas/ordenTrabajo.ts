@@ -31,12 +31,11 @@ export const createOrdenTrabajoSchema = z.object({
     .int("El kilometraje debe ser un número entero")
     .min(0, "El kilometraje no puede ser negativo")
     .max(999999, "El kilometraje no puede exceder 999,999 km"),
-  documentoUsuRpOt: z
-    .string()
-    .min(1, "Debe seleccionar un usuario responsable"),
-  documentoUsuMcOt: z
-    .string()
-    .min(1, "Debe seleccionar un mecánico"),
+  // F1-01: orden rápida -- recepcionista y mecánico son opcionales al crear.
+  // El recepcionista, si no se manda, lo pone el backend (usuario autenticado).
+  // El mecánico se puede asignar después.
+  documentoUsuRpOt: z.string().optional(),
+  documentoUsuMcOt: z.string().optional(),
   observacionCliOt: z
     .string()
     .max(500, "La observación no puede exceder 500 caracteres")
@@ -60,9 +59,9 @@ export const createOrdenTrabajoSchema = z.object({
     { message: "La garantía debe ser al menos 30 días desde hoy" }
   ),
   codOtEstOt: z.number().int().positive("Debe seleccionar un estado").optional(),
-  detalles: z
-    .array(detalleOrdenSchema)
-    .min(1, "Debe agregar al menos un producto a la orden"),
+  // F1-01: una orden rápida se crea sin productos -- se agregan después. El
+  // backend rechaza igual pasar a Completada/Entregada sin al menos uno.
+  detalles: z.array(detalleOrdenSchema),
 });
 
 /**

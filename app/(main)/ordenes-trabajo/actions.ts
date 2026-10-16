@@ -94,7 +94,7 @@ export async function obtenerOrdenTrabajo(
  * Crear nueva orden de trabajo
  */
 export async function crearOrdenTrabajo(data: CreateOrdenTrabajoRequest) {
-  const resp = await appFetch("/api/ordenes-trabajo", {
+  const resp = await appFetch<OrdenTrabajoResponse>("/api/ordenes-trabajo", {
     method: "POST",
     body: JSON.stringify(data),
     headers: {
@@ -103,7 +103,14 @@ export async function crearOrdenTrabajo(data: CreateOrdenTrabajoRequest) {
   });
 
   if (!resp.error) {
-    permanentRedirect("/ordenes-trabajo");
+    // F1-01: orden rápida -- mecánico y productos se agregan después, así que
+    // se redirige directo a editar en vez de a la lista.
+    const consecutivo = resp.data?.consecutivoOt;
+    permanentRedirect(
+      consecutivo
+        ? `/ordenes-trabajo/editar?consecutivo=${consecutivo}`
+        : "/ordenes-trabajo"
+    );
   }
 
   return resp;
