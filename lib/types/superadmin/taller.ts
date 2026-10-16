@@ -19,7 +19,6 @@ export type TallerPlataforma = {
 };
 
 export type UsuarioTaller = {
-  documentoUsu: string;
   nombreCompleto: string;
   rol: string;
   ultimoIngreso?: string | null;
