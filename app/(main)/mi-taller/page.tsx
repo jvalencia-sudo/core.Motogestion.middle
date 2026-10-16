@@ -4,8 +4,17 @@ import ConfigForm from "./config-form";
 import { TallerConfig } from "@/lib/types/taller";
 
 export default async function MiTallerPage() {
-  const config: TallerConfig =
-    (await obtenerConfigTaller()) ?? { modoManoObra: "HORAS", tarifaHoraPred: 0 };
+  const config: TallerConfig = (await obtenerConfigTaller()) ?? {
+    modoManoObra: "HORAS",
+    tarifaHoraPred: 0,
+    telefonoTal: null,
+    direccionTal: null,
+    textoPieComprobante: null,
+    diasGarantiaPred: 30,
+    nombreTal: "",
+    nitTal: null,
+    correoTal: null,
+  };
 
   return (
     <>

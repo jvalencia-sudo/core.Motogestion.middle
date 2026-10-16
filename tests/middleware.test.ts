@@ -183,12 +183,28 @@ describe("middleware", () => {
   // /inicio para CUALQUIER usuario, incluyendo Admin. Eso bloqueaba por
   // completo llegar a pagar un plan (el botón "Ver planes" no llevaba a
   // ningún lado).
+  //
+  // F0-13 (cierre): el permiso pasó de "leer:productos" (lo tienen los 3
+  // roles) a "leer:users" -- mismo nivel que /mi-taller y /suscripcion. El
+  // backend siempre exigió Admin para POST /checkout (require_admin); con
+  // "leer:productos" un Mecánico/Recepcionista veía el botón "Pagar" y el
+  // backend se lo rechazaba.
   it.each(["/planes", "/planes/gracias"])(
-    "%s es accesible con leer:productos (antes redirigía a /inicio para todos)",
+    "%s es accesible con leer:users",
+    async (path) => {
+      getSession.mockResolvedValue(SESSION);
+      const res = await middleware(req(path, JSON.stringify(["leer:users"])));
+      expect(res.headers.get("location")).toBeNull();
+    },
+  );
+
+  it.each(["/planes", "/planes/gracias"])(
+    "%s redirige a /inicio sin leer:users",
     async (path) => {
       getSession.mockResolvedValue(SESSION);
       const res = await middleware(req(path, JSON.stringify(["leer:productos"])));
-      expect(res.headers.get("location")).toBeNull();
+      expect(res.status).toBe(307);
+      expect(new URL(res.headers.get("location")!).pathname).toBe("/inicio");
     },
   );
 
