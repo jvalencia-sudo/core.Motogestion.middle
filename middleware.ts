@@ -4,16 +4,18 @@ import { auth0 } from "@/lib/auth0";
 import { PERMISSIONS } from "@/lib/permissions";
 import { UserWithPermissions } from "@/lib/types/user";
 
-const APP_COOKIES = ["logged", "permissions", "taller", "perfil", "superadmin"];
+const APP_COOKIES = ["logged", "permissions", "taller", "perfil", "superadmin", "sub"];
 
 export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/auth/")) {
     const response = await auth0.middleware(request);
-    // El SDK de Auth0 solo limpia su propia sesión; estas cookies las
-    // maneja esta app a mano (más abajo) y sobreviven al logout si no las
-    // borramos aquí. Sin esto, iniciar sesión con OTRA cuenta en el mismo
-    // navegador reutiliza los permisos/taller/perfil de la cuenta anterior,
-    // porque el middleware solo vuelve a pedirlos cuando falta "logged".
+    // El SDK de Auth0 solo limpia su propia sesión; estas cookies las maneja
+    // esta app a mano (más abajo) y sobreviven al logout si no las borramos
+    // aquí. Esto es un segundo cierre, no el único: la cookie "sub" (más
+    // abajo) ya detecta un cambio de cuenta aunque nunca se pase por acá
+    // (sesión de Auth0 terminada de cualquier otra forma), pero limpiar en
+    // /auth/logout de una vez evita el viaje extra de "pedir permisos de
+    // nuevo" en el primer request de la sesión siguiente.
     if (request.nextUrl.pathname === "/auth/logout") {
       for (const name of APP_COOKIES) {
         response.cookies.delete(name);
@@ -85,8 +87,18 @@ export async function middleware(request: NextRequest) {
   // ciertos perfiles de navegador mientras las demás sí llegaban bien.
   const esHttps = request.nextUrl.protocol === "https:";
 
-  // If the user is logged in but the "logged" cookie is not set, authenticate them
-  if (!request.cookies.has("logged")) {
+  // Si las cookies propias de la app son de OTRA cuenta de Auth0 (la sesión
+  // cambió sin pasar por /auth/logout: expiró, se cerró desde otro lado, o
+  // alguien más inició sesión en el mismo navegador), hay que volver a pedir
+  // permisos -- si no, la cuenta nueva heredaría superadmin/permissions/taller
+  // de la anterior hasta que esas cookies expiraran solas.
+  const necesitaRelogin =
+    !request.cookies.has("logged") ||
+    request.cookies.get("sub")?.value !== session.user.sub;
+
+  // If the user is logged in but the "logged" cookie is not set (o es de otra
+  // cuenta), authenticate them
+  if (necesitaRelogin) {
     try {
       const resp = await fetch(
         new URL("/api/auth/login", process.env.BASE_API_URL),
@@ -110,6 +122,7 @@ export async function middleware(request: NextRequest) {
         nuevasCookies.push(
           { name: "logged", value: "true" },
           { name: "permissions", value: JSON.stringify(user.permissions) },
+          { name: "sub", value: session.user.sub },
         );
         if (user.nombreTal) {
           nuevasCookies.push({ name: "taller", value: user.nombreTal });
@@ -121,6 +134,13 @@ export async function middleware(request: NextRequest) {
           nuevasCookies.push({ name: "superadmin", value: "true" });
         }
 
+        // Si esto corrió por un cambio de cuenta (no por falta de "logged"),
+        // hay que limpiar TODAS las cookies viejas primero -- si no, una que
+        // la cuenta nueva no debería tener (ej. "superadmin") sobrevive
+        // porque nada la vuelve a escribir cuando esta cuenta no la necesita.
+        for (const name of APP_COOKIES) {
+          request.cookies.delete(name);
+        }
         for (const cookie of nuevasCookies) {
           request.cookies.set(cookie.name, cookie.value);
         }
@@ -136,6 +156,14 @@ export async function middleware(request: NextRequest) {
   }
 
   const aplicarCookies = (response: NextResponse) => {
+    // Mismo motivo que arriba: si hubo relogin, limpiar primero en la
+    // RESPUESTA (lo que de verdad recibe el navegador) para que una cookie
+    // que la cuenta nueva no debería tener no sobreviva ahí tampoco.
+    if (necesitaRelogin) {
+      for (const name of APP_COOKIES) {
+        response.cookies.delete(name);
+      }
+    }
     for (const cookie of nuevasCookies) {
       response.cookies.set(cookie.name, cookie.value, {
         httpOnly: true,

@@ -16,9 +16,11 @@ const SESSION = {
   user: { email: "usuario@taller.com", sub: "auth0|1" },
 };
 
-// Por defecto la cookie "logged" ya está presente: la rama que llama al
-// backend (/api/auth/login) no se ejerce y estos tests se enfocan en el
-// chequeo de permisos. Pasar `logged: false` simula una sesión recién creada.
+// Por defecto la cookie "logged" ya está presente, CON el "sub" de SESSION
+// (mismo usuario): la rama que llama al backend (/api/auth/login) no se
+// ejerce y estos tests se enfocan en el chequeo de permisos. Pasar
+// `logged: false` simula una sesión recién creada; pasar un `sub` explícito
+// (sin `logged: false`) simula cookies de OTRA cuenta en el mismo navegador.
 function req(
   path: string,
   permissionsCookie?: string,
@@ -26,7 +28,8 @@ function req(
     logged = true,
     https = false,
     superadmin = false,
-  }: { logged?: boolean; https?: boolean; superadmin?: boolean } = {},
+    sub,
+  }: { logged?: boolean; https?: boolean; superadmin?: boolean; sub?: string } = {},
 ) {
   const headers = new Headers();
   const partes: string[] = [];
@@ -35,6 +38,8 @@ function req(
     partes.push(`permissions=${encodeURIComponent(permissionsCookie)}`);
   }
   if (superadmin) partes.push("superadmin=true");
+  const subCookie = sub ?? (logged ? SESSION.user.sub : undefined);
+  if (subCookie !== undefined) partes.push(`sub=${encodeURIComponent(subCookie)}`);
   if (partes.length) headers.set("cookie", partes.join("; "));
   const base = https ? "https://taller.app" : "http://localhost:3000";
   return new NextRequest(new URL(path, base), { headers });
@@ -279,6 +284,81 @@ describe("middleware", () => {
       vi.unstubAllGlobals();
       vi.unstubAllEnvs();
     }
+  });
+
+  // BLOQUEANTE 2 (seguridad): las cookies propias de la app no estaban atadas
+  // al sub de la sesión de Auth0 -- si la cuenta cambiaba sin pasar por
+  // /auth/logout, la cuenta nueva heredaba las cookies (incluida
+  // "superadmin") de la anterior en el mismo navegador.
+  describe("cookies de otra cuenta en el mismo navegador", () => {
+    it("sesión de B con cookies de A (superadmin) no entra a /superadmin", async () => {
+      // Cookies en el navegador: cuenta A, superadmin. Pero la sesión de
+      // Auth0 ahora es de B (sub distinto) -- nunca pasó por /auth/logout.
+      getSession.mockResolvedValue({
+        tokenSet: { accessToken: "tok-b" },
+        user: { email: "b@taller.com", sub: "auth0|B" },
+      });
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ permissions: ["leer:clientes"], esSuperAdmin: false }),
+      });
+      vi.stubGlobal("fetch", fetchMock);
+      vi.stubEnv("BASE_API_URL", "http://backend.local");
+
+      try {
+        const res = await middleware(
+          req("/superadmin", undefined, { superadmin: true, sub: "auth0|A" }),
+        );
+        // Se volvió a pedir permisos (el backend dice que B no es superadmin):
+        expect(fetchMock).toHaveBeenCalled();
+        expect(res.status).toBe(307);
+        expect(new URL(res.headers.get("location")!).pathname).toBe("/inicio");
+        // Y la cookie superadmin vieja no sobrevive en la respuesta.
+        expect(res.cookies.get("superadmin")?.value).toBeFalsy();
+      } finally {
+        vi.unstubAllGlobals();
+        vi.unstubAllEnvs();
+      }
+    });
+
+    it("sesión de B con permisos/cookies de A no entra con los permisos de A", async () => {
+      getSession.mockResolvedValue({
+        tokenSet: { accessToken: "tok-b" },
+        user: { email: "b@taller.com", sub: "auth0|B" },
+      });
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ permissions: ["leer:productos"] }), // B no tiene leer:users
+      });
+      vi.stubGlobal("fetch", fetchMock);
+      vi.stubEnv("BASE_API_URL", "http://backend.local");
+
+      try {
+        const res = await middleware(
+          req("/usuarios-roles", JSON.stringify(["leer:users"]), { sub: "auth0|A" }),
+        );
+        expect(fetchMock).toHaveBeenCalled();
+        expect(res.status).toBe(307);
+        expect(new URL(res.headers.get("location")!).pathname).toBe("/inicio");
+      } finally {
+        vi.unstubAllGlobals();
+        vi.unstubAllEnvs();
+      }
+    });
+
+    it("mismo sub en la cookie: no vuelve a pedir permisos (sin regresión)", async () => {
+      getSession.mockResolvedValue(SESSION);
+      const fetchMock = vi.fn();
+      vi.stubGlobal("fetch", fetchMock);
+
+      try {
+        const res = await middleware(req("/inicio", undefined, { sub: SESSION.user.sub }));
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(res.headers.get("location")).toBeNull();
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
   });
 });
 
