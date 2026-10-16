@@ -1,12 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, Plus } from "lucide-react";
 import { PerfilDetallado } from "@/lib/types/auth/perfil";
 import { Permiso } from "@/lib/types/auth/permiso";
 import MatrizPermisosDialog from "./matriz-permisos-dialog";
+import PerfilFormDialog from "./perfil-form-dialog";
+import { eliminarPerfil } from "./actions";
 
 const ADMIN_ROL = 1;
 
@@ -18,9 +28,33 @@ export default function RolesTab({
   catalogo: Permiso[];
 }) {
   const [perfilEditando, setPerfilEditando] = useState<PerfilDetallado | null>(null);
+  const [formDialog, setFormDialog] = useState<{ perfil?: PerfilDetallado } | null>(null);
+  const [eliminando, setEliminando] = useState<number | null>(null);
+  const router = useRouter();
+
+  const perfilesNoAdmin = perfiles.filter((p) => p.codRolPrf !== ADMIN_ROL);
+
+  async function handleEliminar(perfil: PerfilDetallado) {
+    if (!confirm(`¿Eliminar el rol "${perfil.nombrePrf}"?`)) return;
+    setEliminando(perfil.codPrf);
+    const resp = await eliminarPerfil(perfil.codPrf);
+    setEliminando(null);
+    if (resp.error) {
+      alert(resp.error);
+      return;
+    }
+    router.refresh();
+  }
 
   return (
     <>
+      <div className="mb-4 flex justify-end">
+        <Button size="sm" onClick={() => setFormDialog({})}>
+          <Plus className="mr-1 h-4 w-4" />
+          Crear rol
+        </Button>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {perfiles.map((perfil) => {
           const esAdmin = perfil.codRolPrf === ADMIN_ROL;
@@ -32,21 +66,38 @@ export default function RolesTab({
                     <p className="text-lg font-semibold">{perfil.nombrePrf}</p>
                     <p className="text-sm text-muted-foreground">{perfil.descripcionPrf}</p>
                   </div>
-                  {esAdmin && <Badge>Acceso total</Badge>}
+                  <div className="flex items-center gap-1">
+                    {esAdmin && <Badge>Acceso total</Badge>}
+                    {!esAdmin && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Abrir menú</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setPerfilEditando(perfil)}>
+                            Editar permisos
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setFormDialog({ perfil })}>
+                            Renombrar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            disabled={eliminando === perfil.codPrf}
+                            onClick={() => handleEliminar(perfil)}
+                          >
+                            {eliminando === perfil.codPrf ? "Eliminando..." : "Eliminar"}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {perfil.numUsuarios} {perfil.numUsuarios === 1 ? "usuario" : "usuarios"}
                 </p>
-                {!esAdmin && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="self-start"
-                    onClick={() => setPerfilEditando(perfil)}
-                  >
-                    Editar permisos
-                  </Button>
-                )}
               </CardContent>
             </Card>
           );
@@ -60,6 +111,17 @@ export default function RolesTab({
           open={!!perfilEditando}
           onOpenChange={(open) => {
             if (!open) setPerfilEditando(null);
+          }}
+        />
+      )}
+
+      {formDialog && (
+        <PerfilFormDialog
+          perfil={formDialog.perfil}
+          perfilesExistentes={perfilesNoAdmin}
+          open={!!formDialog}
+          onOpenChange={(open) => {
+            if (!open) setFormDialog(null);
           }}
         />
       )}
