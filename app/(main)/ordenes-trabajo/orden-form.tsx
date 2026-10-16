@@ -356,21 +356,17 @@ export default function OrdenForm({
     return detalles.filter(d => d.seFactura !== false).length;
   };
 
-  // Validar si el formulario está completo para habilitar el botón de crear
+  // Validar si el formulario está completo para habilitar el botón de crear.
+  // F1-01: orden rápida -- mecánico y productos son opcionales ("se agregan
+  // después"), así que no bloquean el envío. Si se agregó algún producto, sí
+  // debe estar completo (producto + cantidad, sin exceder stock).
   const isFormularioCompleto = () => {
     const values = form.getValues();
 
-    // Validar campos obligatorios del formulario
     const camposObligatorios =
       values.placaMotOt &&
-      values.kilometrajeIngresoOt > 0 &&
-      values.documentoUsuRpOt &&
-      values.documentoUsuMcOt;
+      values.kilometrajeIngresoOt > 0;
 
-    // Validar que haya al menos un detalle
-    const hayDetalles = detalles.length > 0;
-
-    // Validar que todos los detalles tengan producto y cantidad
     const detallesCompletos = detalles.every(
       (d) => d.codProDeto !== 0 && d.cantidadDeto > 0
     );
@@ -383,15 +379,13 @@ export default function OrdenForm({
       return d.cantidadDeto <= (producto.stockPro ?? 0);
     });
 
-    return camposObligatorios && hayDetalles && detallesCompletos && stockValido;
+    return camposObligatorios && detallesCompletos && stockValido;
   };
 
   async function onSubmit(values: CreateOrdenTrabajoFormData) {
-    // Validar que haya al menos un detalle
-    if (detalles.length === 0) {
-      setError("Debe agregar al menos un producto o servicio a la orden");
-      return;
-    }
+    // F1-01: orden rápida -- ya no se exige al menos un producto para crear
+    // (se pueden agregar después). El backend sí rechaza pasar a Completada o
+    // Entregada sin ítems; ese error llega por resp.error más abajo.
 
     // Validar que todos los detalles tengan producto y cantidad seleccionados
     const detallesInvalidos = detalles.filter(
@@ -880,18 +874,14 @@ export default function OrdenForm({
                     name="documentoUsuRpOt"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Usuario Responsable{!isEdit && " *"}</FormLabel>
+                        <FormLabel>Usuario Responsable</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           value={field.value}
                         >
                           <FormControl>
-                            <SelectTrigger
-                              className={
-                                !field.value ? "border-red-500" : ""
-                              }
-                            >
-                              <SelectValue placeholder="Selecciona responsable" />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Usuario autenticado (por defecto)" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -915,18 +905,14 @@ export default function OrdenForm({
                     name="documentoUsuMcOt"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Mecánico Asignado{!isEdit && " *"}</FormLabel>
+                        <FormLabel>Mecánico Asignado</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           value={field.value}
                         >
                           <FormControl>
-                            <SelectTrigger
-                              className={
-                                !field.value ? "border-red-500" : ""
-                              }
-                            >
-                              <SelectValue placeholder="Selecciona mecánico" />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Sin asignar (se puede agregar después)" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -1021,9 +1007,9 @@ export default function OrdenForm({
           {form.watch("placaMotOt") && (
             <Card>
               <CardHeader>
-                <CardTitle>4. Productos y Servicios</CardTitle>
+                <CardTitle>4. Productos y Servicios (opcional)</CardTitle>
                 <CardDescription>
-                  Agrega los productos y servicios realizados en esta orden
+                  Puedes agregarlos ahora o después, antes de marcar la orden como Completada
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -1362,7 +1348,8 @@ export default function OrdenForm({
               {!isFormularioCompleto() && (
                 <Alert>
                   <AlertDescription>
-                    Completa todos los campos obligatorios y agrega al menos un producto para crear la orden.
+                    Completa la placa y el kilometraje para crear la orden. El mecánico y los
+                    productos se pueden agregar después.
                   </AlertDescription>
                 </Alert>
               )}

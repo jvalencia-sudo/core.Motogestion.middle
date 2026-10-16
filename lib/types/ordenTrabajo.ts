@@ -58,8 +58,9 @@ export interface OrdenTrabajoResponse {
   // Información de usuarios
   documentoRecepcionista: string;
   recepcionista: string;
-  documentoMecanico: string;
-  mecanico: string;
+  // F1-01: una orden puede no tener mecánico asignado todavía.
+  documentoMecanico: string | null;
+  mecanico: string | null;
 
   // Estado
   estadoOt: string;
@@ -82,7 +83,7 @@ export interface OrdenTrabajoResumen {
   nombreCompletoCliente: string;
   telefonoCli: string;
   estadoOt: string;
-  mecanico: string;
+  mecanico: string | null;
   totalOt?: number;
   subtotalProductos?: number;
 }
@@ -91,8 +92,10 @@ export interface OrdenTrabajoResumen {
 export interface CreateOrdenTrabajoRequest {
   placaMotOt: string;
   kilometrajeIngresoOt: number;
-  documentoUsuRpOt: string;
-  documentoUsuMcOt: string;
+  // F1-01: opcionales -- el backend pone el recepcionista por defecto
+  // (usuario autenticado) y el mecánico se asigna después.
+  documentoUsuRpOt?: string;
+  documentoUsuMcOt?: string;
   observacionCliOt?: string;
   observacionOt?: string;
   fechaEntregaOt?: string;
