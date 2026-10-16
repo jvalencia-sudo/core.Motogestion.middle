@@ -10,32 +10,8 @@ export type PerfilPermiso = {
   estadoPermiso: string;
 };
 
-export type PermisoDisponible = {
-  codPrm: number;
-  nombrePrm: string;
-  descripcionPrm: string;
-  rutaVisPrm: string;
-};
-
-export type AsignarPermisoRequest = {
-  codPrf: number;
-  codRol: number;
-  codPrm: number;
-  codEst: number;
-};
-
-export type CambiarEstadoPermisoRequest = {
-  codPrf: number;
-  codRol: number;
-  codPrm: number;
-  codEst: number;
-};
-
-export type PerfilConRol = {
-  codPrf: number;
-  nombrePrf: string;
-  descripcionPrf: string;
-  codEstPrf: number;
-  codRolPrf: number;
-  nombreRol?: string;
+// PUT /api/perfil-permiso/perfil/{codPrf}/permisos (F0-13): reemplaza TODOS
+// los permisos del perfil de una vez -- la lista es el estado final, no un delta.
+export type ReemplazarPermisosRequest = {
+  codPrmList: number[];
 };

@@ -67,7 +67,7 @@ export default function ResetPasswordForm({ user }: ResetPasswordFormProps) {
         setSuccess(true);
         form.reset();
         setTimeout(() => {
-          router.push("/users");
+          router.push("/usuarios-roles");
         }, 2000);
       }
     } catch {
@@ -109,11 +109,7 @@ export default function ResetPasswordForm({ user }: ResetPasswordFormProps) {
                       <FormItem>
                         <FormLabel>Nueva Contraseña</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Mínimo 8 caracteres"
-                            type="password"
-                            {...field}
-                          />
+                          <Input placeholder="Mínimo 8 caracteres" type="password" {...field} />
                         </FormControl>
                         <FormDescription>Mínimo 8 caracteres</FormDescription>
                         <FormMessage />
@@ -130,11 +126,7 @@ export default function ResetPasswordForm({ user }: ResetPasswordFormProps) {
                       <FormItem>
                         <FormLabel>Confirmar Contraseña</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Confirma la contraseña"
-                            type="password"
-                            {...field}
-                          />
+                          <Input placeholder="Confirma la contraseña" type="password" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -147,7 +139,7 @@ export default function ResetPasswordForm({ user }: ResetPasswordFormProps) {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => router.push("/users")}
+                  onClick={() => router.push("/usuarios-roles")}
                   disabled={loading}
                 >
                   Cancelar

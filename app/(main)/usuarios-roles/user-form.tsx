@@ -21,15 +21,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { User, CreateUserRequest, UpdateUserRequest } from "@/lib/types/auth/user";
-import { Rol } from "@/lib/types/auth/rol";
 import { Perfil } from "@/lib/types/auth/perfil";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { crearUsuario, editarUsuario } from "./actions";
+import { descripcionDeRol } from "./rol-descripcion";
 
-// Schema para crear usuario
+// Un solo campo de rol (codPrfUsu): el backend deriva el rol global del
+// perfil elegido, ya no se piden "rol" y "perfil" por separado (F0-13).
 const createUserSchema = z.object({
   documentoUsu: z.string().min(1, "El documento es requerido"),
   nombreUsu: z.string().min(1, "El nombre es requerido"),
@@ -37,37 +38,31 @@ const createUserSchema = z.object({
   apellido2Usu: z.string().optional(),
   correoUsu: z.string().email("El correo debe ser válido"),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
-  codPrfUsu: z.coerce.number().min(1, "El perfil es requerido"),
-  codRolPrfUsu: z.coerce.number().min(1, "El rol es requerido"),
+  codPrfUsu: z.coerce.number().min(1, "El rol es requerido"),
   codTipoUsu: z.coerce.number().optional(),
   codEstUsu: z.coerce.number().optional(),
 });
 
-// Schema para editar usuario (sin password obligatorio)
 const updateUserSchema = z.object({
   documentoUsu: z.string().min(1, "El documento es requerido"),
   nombreUsu: z.string().min(1, "El nombre es requerido"),
   apellido1Usu: z.string().min(1, "El primer apellido es requerido"),
   apellido2Usu: z.string().optional(),
   correoUsu: z.string().email("El correo debe ser válido"),
-  codPrfUsu: z.coerce.number().min(1, "El perfil es requerido"),
-  codRolPrfUsu: z.coerce.number().min(1, "El rol es requerido"),
+  codPrfUsu: z.coerce.number().min(1, "El rol es requerido"),
   codTipoUsu: z.coerce.number().optional(),
   codEstUsu: z.coerce.number().optional(),
 });
 
-
 interface UserFormProps {
   user?: User;
   isEdit?: boolean;
-  roles: Rol[];
   perfiles: Perfil[];
 }
 
-export default function UserForm({ user, isEdit = false, roles, perfiles }: UserFormProps) {
+export default function UserForm({ user, isEdit = false, perfiles }: UserFormProps) {
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(false);
-  const [perfilesFiltrados, setPerfilesFiltrados] = useState<Perfil[]>([]);
 
   const form = useForm<z.infer<typeof createUserSchema>>({
     resolver: zodResolver(isEdit ? updateUserSchema : createUserSchema),
@@ -79,51 +74,14 @@ export default function UserForm({ user, isEdit = false, roles, perfiles }: User
       correoUsu: user?.correoUsu || "",
       password: "",
       codPrfUsu: user?.codPrfUsu,
-      codRolPrfUsu: user?.codRolPrfUsu,
       codTipoUsu: user?.codTipoUsu || 1,
       codEstUsu: user?.codEstUsu || 1,
     },
   });
 
-  // Watch para detectar cambios en el rol
-  const selectedRol = form.watch("codRolPrfUsu");
-
-  useEffect(() => {
-    if (user) {
-      form.reset({
-        documentoUsu: user.documentoUsu.toString(),
-        nombreUsu: user.nombreUsu,
-        apellido1Usu: user.apellido1Usu,
-        apellido2Usu: user.apellido2Usu || "",
-        correoUsu: user.correoUsu || "",
-        password: "",
-        codPrfUsu: user.codPrfUsu,
-        codRolPrfUsu: user.codRolPrfUsu,
-        codTipoUsu: user.codTipoUsu,
-        codEstUsu: user.codEstUsu,
-      });
-    }
-  }, [user, form]);
-
-  // Filtrar perfiles según el rol seleccionado
-  useEffect(() => {
-    if (selectedRol) {
-      const perfilesPorRol = perfiles.filter(
-        (perfil) => perfil.codRolPrf === selectedRol
-      );
-      setPerfilesFiltrados(perfilesPorRol);
-
-      // Si el perfil actual no está en la lista filtrada, limpiar el campo
-      const currentPerfil = form.getValues("codPrfUsu");
-      // 0 no es un perfil válido (el schema exige min(1)): fuerza a reelegir.
-      if (currentPerfil && !perfilesPorRol.find(p => p.codPrf === currentPerfil)) {
-        form.setValue("codPrfUsu", 0);
-      }
-    } else {
-      setPerfilesFiltrados([]);
-      form.setValue("codPrfUsu", 0);
-    }
-  }, [selectedRol, perfiles, form]);
+  const selectedPerfil = form.watch("codPrfUsu");
+  const rolSeleccionado = perfiles.find((p) => p.codPrf === selectedPerfil);
+  const descripcion = descripcionDeRol(rolSeleccionado?.codRolPrf);
 
   async function onSubmit(values: z.infer<typeof createUserSchema>) {
     setLoading(true);
@@ -131,21 +89,15 @@ export default function UserForm({ user, isEdit = false, roles, perfiles }: User
 
     try {
       if (isEdit && user) {
-        // Para editar, no enviamos el password (se descarta a propósito)
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password: _password, ...updateData } = values;
         const resp = await editarUsuario(
           user.documentoUsu.toString(),
           updateData as UpdateUserRequest
         );
-
-        if (resp?.error) {
-          setError(resp.error);
-        }
+        if (resp?.error) setError(resp.error);
       } else {
-        // Para crear, enviamos todos los datos incluido password
         const resp = await crearUsuario(values as CreateUserRequest);
-
         if (resp?.error) {
           setError(resp.error);
         } else {
@@ -174,7 +126,6 @@ export default function UserForm({ user, isEdit = false, roles, perfiles }: User
           <Card className="mb-4">
             <CardContent className="py-4">
               <div className="grid grid-cols-12 gap-4">
-                {/* Documento */}
                 <div className="col-span-6">
                   <FormField
                     control={form.control}
@@ -196,7 +147,6 @@ export default function UserForm({ user, isEdit = false, roles, perfiles }: User
                   />
                 </div>
 
-                {/* Nombre */}
                 <div className="col-span-6">
                   <FormField
                     control={form.control}
@@ -213,7 +163,6 @@ export default function UserForm({ user, isEdit = false, roles, perfiles }: User
                   />
                 </div>
 
-                {/* Primer Apellido */}
                 <div className="col-span-6">
                   <FormField
                     control={form.control}
@@ -222,11 +171,7 @@ export default function UserForm({ user, isEdit = false, roles, perfiles }: User
                       <FormItem>
                         <FormLabel>Primer Apellido</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Primer apellido"
-                            type="text"
-                            {...field}
-                          />
+                          <Input placeholder="Primer apellido" type="text" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -234,7 +179,6 @@ export default function UserForm({ user, isEdit = false, roles, perfiles }: User
                   />
                 </div>
 
-                {/* Segundo Apellido */}
                 <div className="col-span-6">
                   <FormField
                     control={form.control}
@@ -255,7 +199,6 @@ export default function UserForm({ user, isEdit = false, roles, perfiles }: User
                   />
                 </div>
 
-                {/* Correo */}
                 <div className="col-span-6">
                   <FormField
                     control={form.control}
@@ -264,11 +207,7 @@ export default function UserForm({ user, isEdit = false, roles, perfiles }: User
                       <FormItem>
                         <FormLabel>Correo Electrónico</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="correo@ejemplo.com"
-                            type="email"
-                            {...field}
-                          />
+                          <Input placeholder="correo@ejemplo.com" type="email" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -276,7 +215,6 @@ export default function UserForm({ user, isEdit = false, roles, perfiles }: User
                   />
                 </div>
 
-                {/* Password - Solo en creación */}
                 {!isEdit && (
                   <div className="col-span-6">
                     <FormField
@@ -286,15 +224,9 @@ export default function UserForm({ user, isEdit = false, roles, perfiles }: User
                         <FormItem>
                           <FormLabel>Contraseña</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="Mínimo 8 caracteres"
-                              type="password"
-                              {...field}
-                            />
+                            <Input placeholder="Mínimo 8 caracteres" type="password" {...field} />
                           </FormControl>
-                          <FormDescription>
-                            Mínimo 8 caracteres
-                          </FormDescription>
+                          <FormDescription>Mínimo 8 caracteres</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -302,11 +234,11 @@ export default function UserForm({ user, isEdit = false, roles, perfiles }: User
                   </div>
                 )}
 
-                {/* Rol */}
-                <div className="col-span-4">
+                {/* Un solo selector: el rol global se deriva de este perfil (F0-13) */}
+                <div className="col-span-6">
                   <FormField
                     control={form.control}
-                    name="codRolPrfUsu"
+                    name="codPrfUsu"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Rol</FormLabel>
@@ -320,58 +252,22 @@ export default function UserForm({ user, isEdit = false, roles, perfiles }: User
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {roles.map((rol) => (
-                              <SelectItem key={rol.codRol} value={rol.codRol.toString()}>
-                                {rol.nombreRol}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* Perfil */}
-                <div className="col-span-4">
-                  <FormField
-                    control={form.control}
-                    name="codPrfUsu"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Perfil</FormLabel>
-                        <Select
-                          onValueChange={(value) => field.onChange(Number(value))}
-                          value={field.value?.toString()}
-                          disabled={!selectedRol || perfilesFiltrados.length === 0}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={
-                                !selectedRol
-                                  ? "Primero selecciona un rol"
-                                  : perfilesFiltrados.length === 0
-                                  ? "No hay perfiles para este rol"
-                                  : "Selecciona un perfil"
-                              } />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {perfilesFiltrados.map((perfil) => (
+                            {perfiles.map((perfil) => (
                               <SelectItem key={perfil.codPrf} value={perfil.codPrf.toString()}>
                                 {perfil.nombrePrf}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
+                        {descripcion && (
+                          <FormDescription>{descripcion}</FormDescription>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
 
-                {/* Estado */}
                 <div className="col-span-4">
                   <FormField
                     control={form.control}

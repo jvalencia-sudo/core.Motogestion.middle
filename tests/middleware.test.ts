@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
+import { PERMISSIONS } from "@/lib/permissions";
+import { MENU, type MenuItem } from "@/lib/menu";
 
 const getSession = vi.fn();
 const auth0Middleware = vi.fn();
@@ -192,4 +194,41 @@ describe("middleware", () => {
     expect(res.status).toBe(307);
     expect(new URL(res.headers.get("location")!).pathname).toBe("/inicio");
   });
+
+  // F0-13: Usuarios, Roles y Vistas (ya quitadas en F0-11) y Perfiles y
+  // Permisos se consolidaron en una sola pantalla.
+  it("/usuarios-roles es accesible con leer:users", async () => {
+    getSession.mockResolvedValue(SESSION);
+    const res = await middleware(req("/usuarios-roles", JSON.stringify(["leer:users"])));
+    expect(res.headers.get("location")).toBeNull();
+  });
+
+  it("/usuarios-roles redirige a /inicio sin leer:users ni leer:perfiles-permisos", async () => {
+    getSession.mockResolvedValue(SESSION);
+    const res = await middleware(req("/usuarios-roles", JSON.stringify(["leer:productos"])));
+    expect(res.status).toBe(307);
+    expect(new URL(res.headers.get("location")!).pathname).toBe("/inicio");
+  });
+});
+
+// F0-13: ya no existe la regla "sin ':' se muestra siempre" -- cada hoja del
+// menú (lib/menu.ts) exige un permiso real, así que tiene que existir una
+// regla en PERMISSIONS (lib/permissions.ts, lo que de verdad aplica el
+// middleware) que matchee su ruta y acepte ese mismo permiso. Sin este test,
+// un ítem de menú y la regla del middleware podrían desincronizarse en
+// silencio: el menú lo mostraría pero el middleware igual redirigiría a
+// /inicio al hacer click.
+function hojasDelMenu(items: MenuItem[]): MenuItem[] {
+  return items.flatMap((item) => (item.items ? hojasDelMenu(item.items) : [item]));
+}
+
+describe("el menú no muestra nada que el middleware vaya a bloquear", () => {
+  it.each(hojasDelMenu(MENU).map((item) => [item.title, item.url!, item.permission!]))(
+    "%s (%s) tiene una regla en PERMISSIONS que acepta %s",
+    (_title, url, permission) => {
+      const regla = PERMISSIONS.find((p) => new RegExp(p.path).test(url));
+      expect(regla, `No hay ninguna regla de PERMISSIONS que matchee ${url}`).toBeDefined();
+      expect(regla!.permissions).toContain(permission);
+    },
+  );
 });
