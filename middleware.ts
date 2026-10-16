@@ -4,7 +4,7 @@ import { auth0 } from "@/lib/auth0";
 import { PERMISSIONS } from "@/lib/permissions";
 import { UserWithPermissions } from "@/lib/types/user";
 
-const APP_COOKIES = ["logged", "permissions", "taller", "perfil"];
+const APP_COOKIES = ["logged", "permissions", "taller", "perfil", "superadmin"];
 
 export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/auth/")) {
@@ -117,6 +117,9 @@ export async function middleware(request: NextRequest) {
         if (user.perfil) {
           nuevasCookies.push({ name: "perfil", value: user.perfil });
         }
+        if (user.esSuperAdmin) {
+          nuevasCookies.push({ name: "superadmin", value: "true" });
+        }
 
         for (const cookie of nuevasCookies) {
           request.cookies.set(cookie.name, cookie.value);
@@ -142,6 +145,24 @@ export async function middleware(request: NextRequest) {
     }
     return response;
   };
+
+  // Panel de super-admin (F0-14): sección aislada, todo-o-nada -- no usa
+  // PERMISSIONS (eso es "accion:recurso" por taller, esto es una marca de
+  // plataforma). Se resuelve ANTES del chequeo de permisos de abajo porque
+  // /superadmin no tiene (ni necesita) ninguna entrada ahí.
+  const esSuperAdmin = request.cookies.get("superadmin")?.value === "true";
+
+  if (request.nextUrl.pathname.startsWith("/superadmin")) {
+    if (!esSuperAdmin) {
+      return aplicarCookies(NextResponse.redirect(new URL("/inicio", request.url)));
+    }
+    return aplicarCookies(NextResponse.next({ request }));
+  }
+
+  // El super-admin llega directo a su panel al iniciar sesión, en vez de /inicio.
+  if (request.nextUrl.pathname === "/inicio" && esSuperAdmin) {
+    return aplicarCookies(NextResponse.redirect(new URL("/superadmin", request.url)));
+  }
 
   // Check permissions for protected routes (la home del sistema es /inicio y no exige permiso específico)
   if (request.nextUrl.pathname !== "/inicio") {
