@@ -10,7 +10,13 @@ import {
   ChangePasswordRequest,
   UserOperationResponse,
 } from "@/lib/types/auth/user";
-import { Perfil, PerfilDetallado } from "@/lib/types/auth/perfil";
+import {
+  Perfil,
+  PerfilDetallado,
+  CrearPerfilRequest,
+  ActualizarPerfilRequest,
+  CrearPerfilResponse,
+} from "@/lib/types/auth/perfil";
 import { Permiso } from "@/lib/types/auth/permiso";
 import { PerfilPermiso, ReemplazarPermisosRequest } from "@/lib/types/auth/perfil-permiso";
 
@@ -112,4 +118,26 @@ export async function reemplazarPermisos(
     body: JSON.stringify(data),
     headers: { "Content-Type": "application/json" },
   });
+}
+
+// ---- Roles propios del taller (crear/renombrar/eliminar, F0-13 ext) ----
+
+export async function crearPerfil(data: CrearPerfilRequest) {
+  return await appFetch<CrearPerfilResponse>("/api/perfil", {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+export async function actualizarPerfil(data: ActualizarPerfilRequest) {
+  return await appFetch("/api/perfil", {
+    method: "PUT",
+    body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+export async function eliminarPerfil(codPrf: number) {
+  return await appFetch(`/api/perfil/${codPrf}`, { method: "DELETE" });
 }
