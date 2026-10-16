@@ -34,10 +34,10 @@ export const MENU: MenuItem[] = [
       { title: "Órdenes de Trabajo", url: "/ordenes-trabajo", permission: "leer:ordenes-trabajo" },
       { title: "Tablero", url: "/tablero", permission: "leer:ordenes-trabajo" },
       { title: "Reclamos", url: "/reclamos", permission: "leer:reclamos" },
-      // Configuración/Planes no son un recurso propio del catálogo -- ver el
-      // comentario en lib/permissions.ts sobre por qué reusan leer:productos.
-      { title: "Configuración", url: "/configuracion", permission: "leer:productos" },
-      { title: "Planes", url: "/planes", permission: "leer:productos" },
+      // Configuración y Planes se sacaron del menú a pedido del usuario (no
+      // van en el módulo de Taller). Las rutas siguen vivas y gateadas en
+      // lib/permissions.ts -- se llega a ellas por otros lugares (el banner
+      // de suscripción enlaza a /planes), solo no tienen entrada en el menú.
     ],
   },
   {
