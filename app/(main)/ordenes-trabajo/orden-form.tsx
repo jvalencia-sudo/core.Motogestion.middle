@@ -90,7 +90,6 @@ interface OrdenFormProps {
 
 interface DetalleFormRow extends DetalleOrdenTrabajoResponse {
   id: string; // ID temporal para el key de React
-  seFactura?: boolean; // Indica si el producto se factura o no (default: true)
 }
 
 export default function OrdenForm({
@@ -135,6 +134,9 @@ export default function OrdenForm({
 
   // Hook de permisos
   const { hasPermission } = usePermissions();
+  // F1-06: marcar "no se cobra" exige un permiso específico -- solo Admin lo
+  // tiene por defecto (control de fraude: el stock se descuenta igual).
+  const canMarcarNoCobro = hasPermission("marcar_no_cobro:ordenes-trabajo");
 
   const form = useForm<CreateOrdenTrabajoFormData>({
     resolver: zodResolver(isEdit ? updateOrdenTrabajoSchema : createOrdenTrabajoSchema),
@@ -177,6 +179,8 @@ export default function OrdenForm({
       codProDeto: d.codProDeto,
       valorUnitarioDeto: d.valorUnitarioDeto,
       cantidadDeto: d.cantidadDeto,
+      cobrarDeto: d.cobrarDeto,
+      motivoNoCobroDeto: d.motivoNoCobroDeto ?? undefined,
     }));
     form.setValue("detalles", detallesParaFormulario, { shouldValidate: true });
   }, [detalles, form]);
@@ -187,8 +191,6 @@ export default function OrdenForm({
       const detallesConId: DetalleFormRow[] = orden.detalles.map((det, idx) => ({
         ...det,
         id: `existing-${idx}`,
-        cantidadDeto: Math.abs(det.cantidadDeto), // Siempre positivo en el estado local
-        seFactura: det.cantidadDeto >= 0 ? true : false, // Si cantidad era negativa, no se factura
       }));
       setDetalles(detallesConId);
     }
@@ -301,7 +303,8 @@ export default function OrdenForm({
       nombrePro: "",
       subtotal: 0,
       estadoProducto: "Pendiente",
-      seFactura: true, // Por defecto, los productos se facturan
+      cobrarDeto: true, // Por defecto, los productos se cobran
+      motivoNoCobroDeto: undefined,
     };
     setDetalles([...detalles, nuevoDetalle]);
   };
@@ -337,23 +340,23 @@ export default function OrdenForm({
   };
 
   const calcularTotal = () => {
-    // El valorUnitarioDeto ya incluye el impuesto (es precioConImpuesto)
-    // Sumamos TODOS los productos usando valor absoluto para la UI
+    // El valorUnitarioDeto ya incluye el impuesto (es precioConImpuesto).
+    // cantidadDeto siempre es positiva (F1-06): el signo ya no se usa.
     return detalles.reduce((total, detalle) => {
-      return total + detalle.valorUnitarioDeto * Math.abs(detalle.cantidadDeto);
+      return total + detalle.valorUnitarioDeto * detalle.cantidadDeto;
     }, 0);
   };
 
   const calcularTotalFacturable = () => {
-    // Total que realmente se facturará (solo productos con seFactura !== false)
+    // Total que realmente se facturará (solo productos con cobrarDeto !== false)
     return detalles.reduce((total, detalle) => {
-      if (detalle.seFactura === false) return total;
+      if (detalle.cobrarDeto === false) return total;
       return total + detalle.valorUnitarioDeto * detalle.cantidadDeto;
     }, 0);
   };
 
   const contarProductosFacturables = () => {
-    return detalles.filter(d => d.seFactura !== false).length;
+    return detalles.filter((d) => d.cobrarDeto !== false).length;
   };
 
   // Validar si el formulario está completo para habilitar el botón de crear.
@@ -371,15 +374,21 @@ export default function OrdenForm({
       (d) => d.codProDeto !== 0 && d.cantidadDeto > 0
     );
 
+    // F1-06: si no se cobra, el motivo es obligatorio.
+    const motivosCompletos = detalles.every(
+      (d) => d.cobrarDeto !== false || !!d.motivoNoCobroDeto?.trim()
+    );
+
     // Validar que ninguna cantidad exceda el stock (solo BIEN maneja stock;
-    // SERVICIO/PAQUETE no validan stock aquí).
+    // SERVICIO/PAQUETE no validan stock aquí). F1-06: una cortesía también
+    // descuenta stock, así que también debe respetar el disponible.
     const stockValido = detalles.every((d) => {
       const producto = productos?.find((p) => p.codPro === d.codProDeto);
       if (!producto || producto.tipoPro !== "BIEN") return true;
       return d.cantidadDeto <= (producto.stockPro ?? 0);
     });
 
-    return camposObligatorios && detallesCompletos && stockValido;
+    return camposObligatorios && detallesCompletos && motivosCompletos && stockValido;
   };
 
   async function onSubmit(values: CreateOrdenTrabajoFormData) {
@@ -396,12 +405,18 @@ export default function OrdenForm({
       return;
     }
 
-    // Validar que ninguna cantidad exceda el stock disponible
-    // SOLO para productos que se facturan (seFactura === true)
-    const detallesExcedenStock = detalles.filter((d) => {
-      // Si no se factura, no validar stock (se suma de vuelta)
-      if (d.seFactura === false) return false;
+    // F1-06: si no se cobra, el motivo es obligatorio (mismo chequeo que el backend).
+    const detallesSinMotivo = detalles.filter(
+      (d) => d.cobrarDeto === false && !d.motivoNoCobroDeto?.trim()
+    );
+    if (detallesSinMotivo.length > 0) {
+      setError("Los productos marcados como 'no se cobra' deben tener un motivo");
+      return;
+    }
 
+    // Validar que ninguna cantidad exceda el stock disponible. F1-06: una
+    // cortesía también descuenta stock real, así que también se valida.
+    const detallesExcedenStock = detalles.filter((d) => {
       const producto = productos?.find((p) => p.codPro === d.codProDeto);
       if (!producto) return false;
       // SERVICIO/PAQUETE no manejan stock: nunca exceden.
@@ -414,7 +429,7 @@ export default function OrdenForm({
         if (detalleOriginal) {
           // Producto ya existía en la orden
           // Stock disponible = stock actual + cantidad original en la orden
-          const stockDisponible = stockActual + Math.abs(detalleOriginal.cantidadDeto);
+          const stockDisponible = stockActual + detalleOriginal.cantidadDeto;
           return d.cantidadDeto > stockDisponible;
         }
       }
@@ -476,19 +491,20 @@ export default function OrdenForm({
           const original = detallesOriginales.find(d => d.codProDeto === actual.codProDeto);
 
           if (original) {
-            // Producto existente - verificar si cambió la cantidad o el estado de facturación
-            const cantidadActual = actual.seFactura === false ? -Math.abs(actual.cantidadDeto) : Math.abs(actual.cantidadDeto);
-            const cantidadOriginal = original.cantidadDeto;
+            // Producto existente - verificar si cambió la cantidad o el estado de cobro
+            const cobrarActual = actual.cobrarDeto ?? true;
+            const cambioCantidad = actual.cantidadDeto !== original.cantidadDeto;
+            const cambioCobro =
+              cobrarActual !== (original.cobrarDeto ?? true) ||
+              (actual.motivoNoCobroDeto ?? "") !== (original.motivoNoCobroDeto ?? "");
 
-            // Comparar tanto la magnitud como el signo
-            const cantidadCambio = Math.abs(cantidadActual) !== Math.abs(cantidadOriginal);
-            const estadoFacturacionCambio = (cantidadActual < 0) !== (cantidadOriginal < 0);
-
-            if (cantidadCambio || estadoFacturacionCambio) {
+            if (cambioCantidad || cambioCobro) {
               const respActualizar = await actualizarCantidadProducto(
                 orden.consecutivoOt,
                 actual.codProDeto,
-                cantidadActual
+                actual.cantidadDeto,
+                cobrarActual,
+                actual.motivoNoCobroDeto ?? undefined
               );
 
               if (respActualizar?.error) {
@@ -500,12 +516,13 @@ export default function OrdenForm({
           } else {
             // Producto nuevo - agregar a la orden
             const productoInfo = productos?.find(p => p.codPro === actual.codProDeto);
-            const cantidadAEnviar = actual.seFactura === false ? -Math.abs(actual.cantidadDeto) : actual.cantidadDeto;
 
             const respAgregar = await agregarProductoOrden(
               orden.consecutivoOt,
               actual.codProDeto,
-              cantidadAEnviar
+              actual.cantidadDeto,
+              actual.cobrarDeto ?? true,
+              actual.motivoNoCobroDeto ?? undefined
             );
 
             if (respAgregar?.error) {
@@ -524,8 +541,9 @@ export default function OrdenForm({
         const detallesRequest = detalles.map((d) => ({
           codProDeto: d.codProDeto,
           valorUnitarioDeto: d.valorUnitarioDeto,
-          // Si no se factura, enviar cantidad negativa
-          cantidadDeto: d.seFactura === false ? -Math.abs(d.cantidadDeto) : d.cantidadDeto,
+          cantidadDeto: d.cantidadDeto,
+          cobrarDeto: d.cobrarDeto ?? true,
+          motivoNoCobroDeto: d.motivoNoCobroDeto ?? undefined,
         }));
 
         const data = {
@@ -1041,8 +1059,8 @@ export default function OrdenForm({
                   if (isEdit && orden && producto && esBien) {
                     const detalleOriginal = orden.detalles?.find(det => det.codProDeto === detalle.codProDeto);
                     if (detalleOriginal) {
-                      // Si el producto ya existía, sumar la cantidad original al stock (usar Math.abs por si es negativa)
-                      stockDisponible = (producto.stockPro ?? 0) + Math.abs(detalleOriginal.cantidadDeto);
+                      // Si el producto ya existía, sumar la cantidad original al stock
+                      stockDisponible = (producto.stockPro ?? 0) + detalleOriginal.cantidadDeto;
                     }
                   }
 
@@ -1142,7 +1160,7 @@ export default function OrdenForm({
                                   Stock disponible: {stockDisponible}
                                   {isEdit && orden && orden.detalles?.find(det => det.codProDeto === detalle.codProDeto) && (
                                     <span className="text-xs text-blue-600 ml-1">
-                                      (incluye {Math.abs(orden.detalles.find(det => det.codProDeto === detalle.codProDeto)?.cantidadDeto || 0)} en esta orden)
+                                      (incluye {orden.detalles.find(det => det.codProDeto === detalle.codProDeto)?.cantidadDeto || 0} en esta orden)
                                     </span>
                                   )}
                                 </p>
@@ -1161,32 +1179,28 @@ export default function OrdenForm({
                             <label className="text-sm font-medium">Cantidad *</label>
                             <Input
                               type="number"
-                              min={esBien ? "1" : "0.5"}
-                              step={esBien ? "1" : "0.5"}
-                              max={!esBien ? 99 : detalle.seFactura === false ? 99 : (stockDisponible || 99)}
+                              min="0.01"
+                              step="0.01"
+                              max={esBien ? (stockDisponible || 99999) : 99}
                               placeholder="0"
-                              value={detalle.cantidadDeto === 0 ? "" : Math.abs(detalle.cantidadDeto)}
+                              value={detalle.cantidadDeto === 0 ? "" : detalle.cantidadDeto}
                               onChange={(e) => {
                                 const value = e.target.value === "" ? 0 : Number(e.target.value);
-                                // Solo los BIEN facturables validan stock; servicios/paquetes no.
-                                if (esBien && detalle.seFactura !== false && value > stockDisponible) {
+                                // F1-03/F1-06: toda cantidad de un BIEN (se cobre o no) valida
+                                // stock -- una cortesía también descuenta inventario real.
+                                if (esBien && value > stockDisponible) {
                                   return;
                                 }
                                 actualizarDetalle(detalle.id, "cantidadDeto", value);
                               }}
                               onKeyDown={(e) => {
-                                // Prevenir -, +, e, E. El punto decimal solo se permite en
-                                // servicios/paquetes (p.ej. 1.5 h de mano de obra).
-                                const bloqueadas = esBien
-                                  ? ['-', '+', 'e', 'E', '.']
-                                  : ['-', '+', 'e', 'E'];
-                                if (bloqueadas.includes(e.key)) {
+                                if (['-', '+', 'e', 'E'].includes(e.key)) {
                                   e.preventDefault();
                                 }
                               }}
                               className={
                                 detalle.cantidadDeto === 0 ||
-                                (esBien && detalle.seFactura !== false && Math.abs(detalle.cantidadDeto) > stockDisponible)
+                                (esBien && detalle.cantidadDeto > stockDisponible)
                                   ? "border-red-500"
                                   : ""
                               }
@@ -1196,12 +1210,12 @@ export default function OrdenForm({
                                 La cantidad es obligatoria
                               </p>
                             )}
-                            {esBien && detalle.seFactura !== false && Math.abs(detalle.cantidadDeto) > 0 && Math.abs(detalle.cantidadDeto) > stockDisponible && (
+                            {esBien && detalle.cantidadDeto > 0 && detalle.cantidadDeto > stockDisponible && (
                               <p className="text-xs text-red-500 mt-1">
                                 Excede el stock disponible ({stockDisponible})
                               </p>
                             )}
-                            {detalle.seFactura === false && Math.abs(detalle.cantidadDeto) > 0 && (
+                            {detalle.cobrarDeto === false && detalle.cantidadDeto > 0 && (
                               <p className="text-xs text-green-600 mt-1">
                                 Sin costo para el cliente
                               </p>
@@ -1247,41 +1261,62 @@ export default function OrdenForm({
                                 currency: "COP",
                                 minimumFractionDigits: 0,
                               }).format(
-                                detalle.valorUnitarioDeto * Math.abs(detalle.cantidadDeto)
+                                detalle.valorUnitarioDeto * detalle.cantidadDeto
                               )}
                               disabled
                               className="bg-muted"
                             />
                           </div>
 
-                          {/* Se factura? (solo en edición) y Botón Eliminar */}
-                          <div className="col-span-12 flex items-center justify-between gap-4 pt-2 border-t mt-2">
-                            {isEdit ? (
-                              <div className="flex items-center gap-3">
-                                <Label htmlFor={`factura-${detalle.id}`} className="text-sm font-medium">
-                                  ¿Se cobra?
-                                </Label>
-                                <div className="flex items-center gap-2">
-                                  <span className={cn(
-                                    "text-xs font-medium transition-colors",
-                                    detalle.seFactura ? "text-muted-foreground" : "text-green-600"
-                                  )}>
-                                    No
-                                  </span>
-                                  <Switch
-                                    id={`factura-${detalle.id}`}
-                                    checked={detalle.seFactura ?? true}
-                                    onCheckedChange={(checked) => {
-                                      actualizarDetalle(detalle.id, "seFactura", checked);
-                                    }}
-                                  />
-                                  <span className={cn(
-                                    "text-xs font-medium transition-colors",
-                                    detalle.seFactura ? "text-green-600" : "text-muted-foreground"
-                                  )}>
-                                    Sí
-                                  </span>
+                          {/* ¿Se cobra? (gateado por permiso) y Botón Eliminar */}
+                          <div className="col-span-12 flex items-start justify-between gap-4 pt-2 border-t mt-2">
+                            {canMarcarNoCobro ? (
+                              <div className="flex flex-col gap-2 flex-1">
+                                <div className="flex items-center gap-3">
+                                  <Label htmlFor={`cobrar-${detalle.id}`} className="text-sm font-medium">
+                                    ¿Se cobra?
+                                  </Label>
+                                  <div className="flex items-center gap-2">
+                                    <span className={cn(
+                                      "text-xs font-medium transition-colors",
+                                      detalle.cobrarDeto ?? true ? "text-muted-foreground" : "text-green-600"
+                                    )}>
+                                      No
+                                    </span>
+                                    <Switch
+                                      id={`cobrar-${detalle.id}`}
+                                      checked={detalle.cobrarDeto ?? true}
+                                      onCheckedChange={(checked) => {
+                                        actualizarDetalle(detalle.id, "cobrarDeto", checked);
+                                        if (checked) {
+                                          actualizarDetalle(detalle.id, "motivoNoCobroDeto", undefined);
+                                        }
+                                      }}
+                                    />
+                                    <span className={cn(
+                                      "text-xs font-medium transition-colors",
+                                      detalle.cobrarDeto ?? true ? "text-green-600" : "text-muted-foreground"
+                                    )}>
+                                      Sí
+                                    </span>
+                                  </div>
                                 </div>
+                                {detalle.cobrarDeto === false && (
+                                  <div className="max-w-sm">
+                                    <Input
+                                      placeholder="Motivo de la cortesía (obligatorio)"
+                                      value={detalle.motivoNoCobroDeto ?? ""}
+                                      maxLength={200}
+                                      onChange={(e) =>
+                                        actualizarDetalle(detalle.id, "motivoNoCobroDeto", e.target.value)
+                                      }
+                                      className={!detalle.motivoNoCobroDeto?.trim() ? "border-red-500" : ""}
+                                    />
+                                    {!detalle.motivoNoCobroDeto?.trim() && (
+                                      <p className="text-xs text-red-500 mt-1">El motivo es obligatorio</p>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             ) : (
                               <div></div>

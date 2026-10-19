@@ -304,15 +304,15 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
                     </div>
                     <div className="text-right ml-4">
                       <p className="text-sm text-muted-foreground">
-                        {Math.abs(detalle.cantidadDeto)} x{" "}
+                        {detalle.cantidadDeto} x{" "}
                         {formatearMoneda(detalle.valorUnitarioDeto)}
                       </p>
                       <p className="font-semibold">
-                        {formatearMoneda(Math.abs(detalle.cantidadDeto) * detalle.valorUnitarioDeto)}
+                        {formatearMoneda(detalle.cantidadDeto * detalle.valorUnitarioDeto)}
                       </p>
-                      {detalle.cantidadDeto < 0 && (
+                      {detalle.cobrarDeto === false && (
                         <p className="text-xs text-green-600 mt-1">
-                          Sin costo
+                          Sin costo{detalle.motivoNoCobroDeto ? `: ${detalle.motivoNoCobroDeto}` : ""}
                         </p>
                       )}
                     </div>
@@ -325,13 +325,13 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
                     <span className="text-sm font-medium text-muted-foreground">Subtotal:</span>
                     <span className="text-lg font-semibold">
                       {formatearMoneda(
-                        orden.detalles.reduce((sum, det) => sum + (Math.abs(det.cantidadDeto) * det.valorUnitarioDeto), 0)
+                        orden.detalles.reduce((sum, det) => sum + (det.cantidadDeto * det.valorUnitarioDeto), 0)
                       )}
                     </span>
                   </div>
 
                   {/* Mostrar productos no cobrados si existen */}
-                  {orden.detalles.some(d => d.cantidadDeto < 0) && (
+                  {orden.detalles.some(d => d.cobrarDeto === false) && (
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-muted-foreground">
                         Productos sin costo:
@@ -339,8 +339,8 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
                       <span className="text-green-600 font-medium">
                         -{formatearMoneda(
                           orden.detalles
-                            .filter(d => d.cantidadDeto < 0)
-                            .reduce((sum, det) => sum + (Math.abs(det.cantidadDeto) * det.valorUnitarioDeto), 0)
+                            .filter(d => d.cobrarDeto === false)
+                            .reduce((sum, det) => sum + (det.cantidadDeto * det.valorUnitarioDeto), 0)
                         )}
                       </span>
                     </div>
