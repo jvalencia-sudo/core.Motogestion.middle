@@ -12,7 +12,13 @@ export interface Plan {
   orden: number;
 }
 
+/** Datos para abrir el Widget de Wompi (modal embebido, sin redirect -- el
+ * resultado se maneja en el callback de window.WidgetCheckout.open()). La
+ * firma viene ya calculada por el backend. */
 export interface CheckoutResponse {
-  checkoutUrl: string;
-  referencia: string;
+  publicKey: string;
+  currency: string;
+  amountInCents: number;
+  reference: string;
+  signature: string;
 }

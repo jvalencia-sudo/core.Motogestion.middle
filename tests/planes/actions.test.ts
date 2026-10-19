@@ -9,7 +9,12 @@ describe("crearCheckout (checkout de Wompi)", () => {
   beforeEach(() => appFetch.mockReset());
 
   it("hace POST a /api/suscripciones/checkout con el plan en el body", async () => {
-    appFetch.mockResolvedValue({ data: { checkoutUrl: "https://checkout.wompi.co/x", referencia: "r1" } });
+    appFetch.mockResolvedValue({
+      data: {
+        publicKey: "pub_test_abc", currency: "COP", amountInCents: 4900000,
+        reference: "MG-1-abc", signature: "firma",
+      },
+    });
 
     await crearCheckout("premium");
 
