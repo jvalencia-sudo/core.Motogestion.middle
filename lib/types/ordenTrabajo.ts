@@ -17,8 +17,12 @@ export interface DetalleOrdenTrabajoResponse {
   codProDeto: number;
   nombrePro: string;
   descripcionPro?: string;
-  cantidadDeto: number; // Cantidad del producto. Si es negativa, indica que no se factura y se devuelve al inventario
+  cantidadDeto: number; // Siempre positiva (F1-06): el signo ya no indica cortesía
   valorUnitarioDeto: number;
+  // F1-06: "no se cobra" es explícito -- ya NO se codifica como cantidad negativa.
+  // Una cortesía (cobrarDeto=false) SÍ descuenta stock igual que cualquier otra línea.
+  cobrarDeto: boolean;
+  motivoNoCobroDeto?: string | null;
   subtotal: number;
   fechaConfirmacionDeto?: string;
   usuarioConfirmacion: string;
@@ -28,8 +32,10 @@ export interface DetalleOrdenTrabajoResponse {
 // Detalle para crear/agregar producto (Request)
 export interface DetalleOrdenTrabajoRequest {
   codProDeto: number;
-  cantidadDeto: number; // Cantidad del producto. Si es negativa, indica que no se factura y se devuelve al inventario
+  cantidadDeto: number; // Siempre positiva (F1-06)
   valorUnitarioDeto?: number;
+  cobrarDeto?: boolean; // default true si se omite
+  motivoNoCobroDeto?: string;
 }
 
 // Orden de trabajo completa (GET response)
@@ -126,6 +132,8 @@ export interface EntregarOrdenRequest {
 // Request para actualizar cantidad de producto
 export interface UpdateCantidadProductoRequest {
   cantidadDeto: number;
+  cobrarDeto?: boolean;
+  motivoNoCobroDeto?: string;
 }
 
 // Response de operaciones

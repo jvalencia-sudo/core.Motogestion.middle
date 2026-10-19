@@ -4,18 +4,26 @@ import { z } from "zod";
  * Schema para detalle de orden (producto)
  * Frontend usa camelCase, backend Python usa snake_case
  */
-export const detalleOrdenSchema = z.object({
-  codProDeto: z.number().int().positive("Debe seleccionar un producto"),
-  valorUnitarioDeto: z.coerce
-    .number()
-    .positive("El valor debe ser mayor a 0")
-    .optional(),
-  cantidadDeto: z.coerce
-    .number()
-    .int("La cantidad debe ser un número entero")
-    .positive("La cantidad debe ser mayor a 0")
-    .max(99, "La cantidad no puede exceder 99"),
-});
+export const detalleOrdenSchema = z
+  .object({
+    codProDeto: z.number().int().positive("Debe seleccionar un producto"),
+    valorUnitarioDeto: z.coerce
+      .number()
+      .positive("El valor debe ser mayor a 0")
+      .optional(),
+    // F1-03: ya no se fuerza entero ni tope de 99 a nivel de schema -- BIEN
+    // permite decimales (p.ej. 1.5 litros de aceite); el tope de 99 para
+    // SERVICIO/PAQUETE y el entero-only para BIEN que no aplique se valida
+    // en el componente (depende del tipo de producto, que el schema no conoce).
+    cantidadDeto: z.coerce.number().positive("La cantidad debe ser mayor a 0"),
+    // F1-06: "no se cobra" es un campo explícito, no un signo.
+    cobrarDeto: z.boolean().optional(),
+    motivoNoCobroDeto: z.string().max(200, "Máximo 200 caracteres").optional(),
+  })
+  .refine((d) => d.cobrarDeto !== false || !!d.motivoNoCobroDeto?.trim(), {
+    message: "El motivo es obligatorio cuando no se cobra",
+    path: ["motivoNoCobroDeto"],
+  });
 
 /**
  * Schema para crear una nueva orden de trabajo

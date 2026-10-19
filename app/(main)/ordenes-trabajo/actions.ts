@@ -141,11 +141,13 @@ export async function editarOrdenTrabajo(
 export async function actualizarCantidadProducto(
   consecutivo: number,
   codPro: number,
-  cantidadDeto: number
+  cantidadDeto: number,
+  cobrarDeto: boolean = true,
+  motivoNoCobroDeto?: string
 ) {
   const resp = await appFetch(`/api/ordenes-trabajo/${consecutivo}/productos/${codPro}`, {
     method: "PATCH",
-    body: JSON.stringify({ cantidadDeto }),
+    body: JSON.stringify({ cantidadDeto, cobrarDeto, motivoNoCobroDeto }),
     headers: {
       "Content-Type": "application/json",
     },
@@ -160,13 +162,17 @@ export async function actualizarCantidadProducto(
 export async function agregarProductoOrden(
   consecutivo: number,
   codPro: number,
-  cantidadDeto: number
+  cantidadDeto: number,
+  cobrarDeto: boolean = true,
+  motivoNoCobroDeto?: string
 ) {
   const resp = await appFetch(`/api/ordenes-trabajo/${consecutivo}/productos`, {
     method: "POST",
     body: JSON.stringify({
       codProDeto: codPro,
       cantidadDeto: cantidadDeto,
+      cobrarDeto,
+      motivoNoCobroDeto,
     }),
     headers: {
       "Content-Type": "application/json",
