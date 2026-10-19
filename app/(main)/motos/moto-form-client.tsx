@@ -22,6 +22,7 @@ import {
 import { Moto, CreateMotoRequest } from "@/lib/types/moto";
 import { Cliente } from "@/lib/types/cliente";
 import { Marca } from "@/lib/types/marca";
+import { normalizarPlaca } from "@/lib/utils/placa";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -151,7 +152,7 @@ export default function MotoFormClient({
                               type="text"
                               {...field}
                               onChange={(e) =>
-                                field.onChange(e.target.value.toUpperCase())
+                                field.onChange(normalizarPlaca(e.target.value))
                               }
                             />
                           </FormControl>

@@ -22,6 +22,7 @@ import {
 import { Moto, CreateMotoRequest } from "@/lib/types/moto";
 import { Cliente } from "@/lib/types/cliente";
 import { Marca } from "@/lib/types/marca";
+import { normalizarPlaca } from "@/lib/utils/placa";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -152,7 +153,7 @@ export default function MotoForm({
                               {...field}
                               onChange={(e) => {
                                 // Solo permitir alfanuméricos
-                                const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                                const value = normalizarPlaca(e.target.value);
                                 field.onChange(value);
                                 // Validar en tiempo real cuando tenga 4, 5 o 6 caracteres
                                 if (value.length >= 4 && value.length <= 6) {

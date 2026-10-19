@@ -89,7 +89,11 @@ export interface OrdenTrabajoResumen {
   nombreCompletoCliente: string;
   telefonoCli: string;
   estadoOt: string;
+  codOtEstOt: number;
   mecanico: string | null;
+  // F1-02: para el historial del buscador de placa.
+  kilometrajeIngresoOt: number;
+  trabajos?: string | null;
   totalOt?: number;
   subtotalProductos?: number;
 }

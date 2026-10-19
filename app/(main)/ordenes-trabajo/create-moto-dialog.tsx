@@ -32,6 +32,7 @@ import { crearMotoFromModal } from "./actions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CreateMotoRequest } from "@/lib/types/moto";
 import { Marca } from "@/lib/types/marca";
+import { normalizarPlaca } from "@/lib/utils/placa";
 
 const formSchema = z.object({
   placaMot: z
@@ -159,7 +160,7 @@ export function CreateMotoDialog({
                         {...field}
                         onChange={(e) => {
                           // Solo permitir alfanuméricos
-                          const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                          const value = normalizarPlaca(e.target.value);
                           field.onChange(value);
                           // Validar en tiempo real cuando tenga 4, 5 o 6 caracteres
                           if (value.length >= 4 && value.length <= 6) {

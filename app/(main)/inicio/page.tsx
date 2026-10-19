@@ -3,6 +3,7 @@ import { ResumenDashboard } from "@/lib/types/dashboard";
 
 import { DashboardResumen } from "../dashboard-resumen";
 import { TallerName } from "../taller-name";
+import { BuscadorPlaca } from "./buscador-placa";
 
 export default async function page() {
   const { data } = await appFetch<ResumenDashboard>("/api/dashboard/resumen");
@@ -14,6 +15,8 @@ export default async function page() {
         <TallerName />
         <p className="text-muted-foreground">Resumen de tu taller</p>
       </div>
+
+      <BuscadorPlaca />
 
       <DashboardResumen resumen={data} />
     </div>
