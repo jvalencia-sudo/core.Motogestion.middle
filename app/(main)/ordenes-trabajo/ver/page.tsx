@@ -10,6 +10,7 @@ import { ArrowLeft, Pencil } from "lucide-react";
 import { GenerarPdfButton } from "./generar-pdf-button";
 import { AnularOrdenDialog } from "./anular-orden-dialog";
 import { HistorialOrden } from "./historial-orden";
+import { PagosOrden } from "./pagos-orden";
 
 interface VerOrdenPageProps {
   searchParams: Promise<{ consecutivo?: string }>;
@@ -35,6 +36,9 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
   const ESTADO_ANULADA = 5;
   const estaAnulada = orden.codOtEstOt === ESTADO_ANULADA;
   const puedeAnular = permissions.includes("anular:ordenes-trabajo") && !estaAnulada;
+  const puedeVerPagos = permissions.includes("ver:pagos-orden");
+  const puedeRegistrarPago = permissions.includes("crear_editar:pagos-orden");
+  const puedeAnularPago = permissions.includes("eliminar_o_anular:pagos-orden");
 
   const formatearFecha = (fecha: string | null | undefined) => {
     if (!fecha) return "-";
@@ -396,6 +400,18 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
             )}
           </CardContent>
         </Card>
+
+        {puedeVerPagos && (
+          <PagosOrden
+            consecutivo={orden.consecutivoOt}
+            totalOt={orden.totalOt ?? 0}
+            totalPagado={orden.totalPagado ?? 0}
+            saldoOt={orden.saldoOt ?? 0}
+            puedeRegistrar={puedeRegistrarPago}
+            puedeAnular={puedeAnularPago}
+            ordenAnulada={estaAnulada}
+          />
+        )}
 
         {esAdmin && <HistorialOrden consecutivo={orden.consecutivoOt} />}
       </div>

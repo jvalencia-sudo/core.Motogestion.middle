@@ -14,11 +14,12 @@ export async function getTablero(
 export async function cambiarEstadoOrden(
   consecutivoOt: number,
   codEstado: number,
+  confirmarCredito: boolean = false,
 ): Promise<{ ok: boolean; error?: string }> {
   const { error } = await appFetch(`/api/tablero/${consecutivoOt}/estado`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ codEstado }),
+    body: JSON.stringify({ codEstado, confirmarCredito }),
   });
   return { ok: !error, error: error ?? undefined };
 }

@@ -18,6 +18,10 @@ import { Cliente, CreateClienteRequest } from "@/lib/types/cliente";
 import { Moto, CreateMotoRequest } from "@/lib/types/moto";
 import { Marca } from "@/lib/types/marca";
 import { auth0 } from "@/lib/auth0";
+import {
+  PagoOrden,
+  RegistrarPagoRequest,
+} from "@/lib/types/pagoOrden";
 
 // Formas crudas de lo que devuelve el backend, solo con los campos que se leen
 // aquí (evita "any" sin inventarse el contrato completo del backend).
@@ -255,6 +259,51 @@ export async function obtenerHistorialOrden(consecutivo: number): Promise<Histor
     console.error("Error obteniendo historial de la orden:", error);
     return [];
   }
+}
+
+/**
+ * F1-07: lista los abonos/pagos de una orden (incluye los anulados, con su
+ * marca anuladoPago, para que el historial quede visible completo).
+ */
+export async function listarPagosOrden(consecutivo: number): Promise<PagoOrden[]> {
+  try {
+    const response = await appFetch(`/api/ordenes-trabajo/${consecutivo}/pagos`);
+    if (response.error || !response.data) return [];
+    return response.data as PagoOrden[];
+  } catch (error) {
+    console.error("Error obteniendo pagos de la orden:", error);
+    return [];
+  }
+}
+
+/**
+ * F1-07: registra un abono/pago a una orden.
+ */
+export async function registrarPagoOrden(consecutivo: number, data: RegistrarPagoRequest) {
+  return appFetch<PagoOrden>(`/api/ordenes-trabajo/${consecutivo}/pagos`, {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+/**
+ * F1-07: los pagos no se editan ni se borran -- se anulan con motivo
+ * obligatorio (misma idea que anular una orden completa, F1-05).
+ */
+export async function anularPagoOrden(
+  consecutivo: number,
+  codPagoOrden: number,
+  motivo: string
+) {
+  return appFetch<PagoOrden>(
+    `/api/ordenes-trabajo/${consecutivo}/pagos/${codPagoOrden}/anular`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ motivo }),
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 }
 
 /**

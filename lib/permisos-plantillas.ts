@@ -34,4 +34,6 @@ export const PLANTILLA_RECEPCION: string[] = [
   "ajustar:inventario",
   "ver:reclamos",
   "crear_editar:reclamos",
+  "ver:pagos-orden",
+  "crear_editar:pagos-orden",
 ];
