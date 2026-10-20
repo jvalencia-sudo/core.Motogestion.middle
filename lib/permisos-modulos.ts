@@ -10,6 +10,7 @@ export const MODULOS: Record<string, string> = {
   marcas: "Clientes y motos",
   motos: "Clientes y motos",
   "ordenes-trabajo": "Órdenes de trabajo",
+  "pagos-orden": "Pagos",
   tablero: "Tablero",
   productos: "Productos",
   inventario: "Inventario",
@@ -22,6 +23,7 @@ export const MODULOS: Record<string, string> = {
 // Orden fijo en el que se muestran las filas de la matriz (no alfabético).
 export const ORDEN_MODULOS = [
   "Órdenes de trabajo",
+  "Pagos",
   "Tablero",
   "Clientes y motos",
   "Productos",

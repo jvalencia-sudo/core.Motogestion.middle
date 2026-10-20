@@ -82,7 +82,7 @@ export default function TableroPage() {
     return esGestor || ESTADOS_MECANICO.includes(cod);
   }
 
-  async function mover(consecutivoOt: number, codDestino: number) {
+  async function mover(consecutivoOt: number, codDestino: number, confirmarCredito = false) {
     const it = items.find((i) => i.consecutivoOt === consecutivoOt);
     if (!it || it.codEstado === codDestino) return;
     if (!puedeSoltar(codDestino)) {
@@ -94,12 +94,21 @@ export default function TableroPage() {
     setItems((arr) =>
       arr.map((i) => (i.consecutivoOt === consecutivoOt ? { ...i, codEstado: codDestino } : i)),
     );
-    const res = await cambiarEstadoOrden(consecutivoOt, codDestino);
+    const res = await cambiarEstadoOrden(consecutivoOt, codDestino, confirmarCredito);
     if (!res.ok) {
       // revertir
       setItems((arr) =>
         arr.map((i) => (i.consecutivoOt === consecutivoOt ? { ...i, codEstado: previo } : i)),
       );
+      // F1-07: si la orden queda con saldo pendiente al entregar, el backend
+      // rechaza el movimiento salvo que se confirme "entregar a crédito" --
+      // en vez de solo mostrar el error, se ofrece reintentar confirmando.
+      if (!confirmarCredito && res.error?.includes("saldo pendiente")) {
+        if (window.confirm(`${res.error}\n\n¿Entregar de todas formas (a crédito)?`)) {
+          await mover(consecutivoOt, codDestino, true);
+        }
+        return;
+      }
       toast({ title: "No se pudo mover", description: res.error ?? "Intenta de nuevo." });
     }
   }

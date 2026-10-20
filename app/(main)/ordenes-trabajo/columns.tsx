@@ -111,6 +111,23 @@ export const columns: ColumnDef<OrdenTrabajoResumen>[] = [
     },
   },
   {
+    accessorKey: "saldoOt",
+    header: "Saldo",
+    cell: ({ row }) => {
+      const saldo = row.original.saldoOt || 0;
+      const formateado = new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+        minimumFractionDigits: 0,
+      }).format(saldo);
+      return saldo > 0 ? (
+        <span className="font-medium text-destructive">{formateado}</span>
+      ) : (
+        <span className="text-muted-foreground">{formateado}</span>
+      );
+    },
+  },
+  {
     id: "actions",
     header: "Acciones",
     cell: ({ row }) => <ActionsCell orden={row.original} />,

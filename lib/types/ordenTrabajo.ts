@@ -83,6 +83,9 @@ export interface OrdenTrabajoResponse {
   subtotalProductos?: number;
   totalImpuestos?: number;
   totalOt?: number;
+  // F1-07: pagado/saldo (excluye ítems no cobrados y pagos anulados)
+  totalPagado?: number;
+  saldoOt?: number;
 }
 
 // Resumen de orden para listados
@@ -101,6 +104,8 @@ export interface OrdenTrabajoResumen {
   trabajos?: string | null;
   totalOt?: number;
   subtotalProductos?: number;
+  // F1-07: para el filtro "con saldo pendiente" del listado.
+  saldoOt?: number;
 }
 
 // Request para crear orden
@@ -114,7 +119,6 @@ export interface CreateOrdenTrabajoRequest {
   observacionCliOt?: string;
   observacionOt?: string;
   fechaEntregaOt?: string;
-  fechaFinGarantiaOt?: string;
   detalles: DetalleOrdenTrabajoRequest[];
 }
 
@@ -123,7 +127,6 @@ export interface UpdateOrdenTrabajoRequest {
   fechaEntregaOt?: string;
   observacionOt?: string;
   codOtEstOt?: number;
-  fechaFinGarantiaOt?: string;
   documentoUsuRpOt?: string;
   documentoUsuMcOt?: string;
 }
@@ -131,11 +134,15 @@ export interface UpdateOrdenTrabajoRequest {
 // Request para cambiar estado
 export interface CambiarEstadoRequest {
   codOtEstOt: number;
+  // F1-07: confirma entregar (estado 4) con saldo pendiente ("a crédito").
+  confirmarCredito?: boolean;
 }
 
 // Request para entregar orden
 export interface EntregarOrdenRequest {
   kilometrajeSalidaOt?: number;
+  // F1-07: confirma entregar con saldo pendiente ("a crédito").
+  confirmarCredito?: boolean;
 }
 
 // Request para actualizar cantidad de producto
