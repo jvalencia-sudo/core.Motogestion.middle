@@ -4,7 +4,7 @@ import { auth0 } from "@/lib/auth0";
 import { PERMISSIONS } from "@/lib/permissions";
 import { UserWithPermissions } from "@/lib/types/user";
 
-const APP_COOKIES = ["logged", "permissions", "taller", "perfil", "superadmin", "sub"];
+const APP_COOKIES = ["logged", "permissions", "taller", "perfil", "esAdmin", "superadmin", "sub"];
 
 export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/auth/")) {
@@ -130,6 +130,12 @@ export async function middleware(request: NextRequest) {
         if (user.perfil) {
           nuevasCookies.push({ name: "perfil", value: user.perfil });
         }
+        if (user.esAdminUsu) {
+          // F1-12: admin-del-taller, independiente del catálogo de permisos
+          // (igual que require_admin en el backend -- no depende de ninguna
+          // fila de perfiles_permisos).
+          nuevasCookies.push({ name: "esAdmin", value: "true" });
+        }
         if (user.esSuperAdmin) {
           nuevasCookies.push({ name: "superadmin", value: "true" });
         }
@@ -194,37 +200,50 @@ export async function middleware(request: NextRequest) {
 
   // Check permissions for protected routes (la home del sistema es /inicio y no exige permiso específico)
   if (request.nextUrl.pathname !== "/inicio") {
-    const permissions = request.cookies.get("permissions");
-    if (!permissions?.value) {
-      return aplicarCookies(
-        NextResponse.redirect(new URL("/inicio", request.url)),
-      );
-    }
-
-    // If there is a valid session, check the permissions
-    let parsedPermission: string[] = [];
-    try {
-      parsedPermission = JSON.parse(permissions.value);
-    } catch {
-      return aplicarCookies(
-        NextResponse.redirect(new URL("/inicio", request.url)),
-      );
-    }
     const requiredPathPermissions = PERMISSIONS.find((p) =>
       new RegExp(p.path).test(request.nextUrl.pathname),
     );
 
-    // If the user doesn't have the required permissions or there are no permissions configured for the specific path,
-    // redirect to the home page
-    if (
-      !requiredPathPermissions ||
-      !requiredPathPermissions.permissions.some((p) =>
-        parsedPermission.includes(p),
-      )
-    ) {
+    if (!requiredPathPermissions) {
       return aplicarCookies(
         NextResponse.redirect(new URL("/inicio", request.url)),
       );
+    }
+
+    if (requiredPathPermissions.adminOnly) {
+      // F1-12: admin-del-taller, independiente del catálogo de permisos
+      // (igual que require_admin en el backend).
+      if (request.cookies.get("esAdmin")?.value !== "true") {
+        return aplicarCookies(
+          NextResponse.redirect(new URL("/inicio", request.url)),
+        );
+      }
+    } else {
+      const permissions = request.cookies.get("permissions");
+      if (!permissions?.value) {
+        return aplicarCookies(
+          NextResponse.redirect(new URL("/inicio", request.url)),
+        );
+      }
+
+      let parsedPermission: string[] = [];
+      try {
+        parsedPermission = JSON.parse(permissions.value);
+      } catch {
+        return aplicarCookies(
+          NextResponse.redirect(new URL("/inicio", request.url)),
+        );
+      }
+
+      if (
+        !requiredPathPermissions.permissions?.some((p) =>
+          parsedPermission.includes(p),
+        )
+      ) {
+        return aplicarCookies(
+          NextResponse.redirect(new URL("/inicio", request.url)),
+        );
+      }
     }
   }
 

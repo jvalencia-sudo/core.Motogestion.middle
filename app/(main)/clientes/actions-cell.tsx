@@ -33,6 +33,8 @@ export function ActionsCell({ cliente }: ActionsCellProps) {
         const resp = await eliminarCliente(cliente.documentoCli);
         if (!resp.error) {
           window.location.reload();
+        } else {
+          alert(resp.error);
         }
       } finally {
         setIsDeleting(false);

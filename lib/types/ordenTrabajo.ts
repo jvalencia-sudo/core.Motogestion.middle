@@ -48,6 +48,11 @@ export interface OrdenTrabajoResponse {
   observacionOt?: string;
   fechaFinGarantiaOt?: string;
 
+  // Anulación (F1-05)
+  motivoAnulacionOt?: string | null;
+  fechaAnulacionOt?: string | null;
+  documentoUsuAnulacionOt?: string | null;
+
   // Información de la moto
   placaMot: string;
   modeloMot: string;
@@ -146,6 +151,21 @@ export interface OrdenTrabajoOperationResponse {
   consecutivoOt?: number;
 }
 
+// Request para anular una orden (F1-05: motivo obligatorio)
+export interface AnularOrdenRequest {
+  motivo: string;
+}
+
+// Un evento del historial de cambios de una orden (leído de audit_log, F1-05)
+export interface HistorialEvento {
+  fecha: string;
+  usuario: string;
+  tabla: string;
+  evento: string; // "Creado" | "Editado" | "Eliminado"
+  valorAnterior?: Record<string, unknown> | null;
+  valorNuevo?: Record<string, unknown> | null;
+}
+
 // Para selector de motos en el formulario
 export interface MotoSelect {
   placaMot: string;
@@ -164,13 +184,11 @@ export interface ProductoSelect {
   stockPro: number | null;
 }
 
-// Para selector de usuarios (mecánicos)
+// Para selector de usuarios (mecánicos/recepcionistas)
 export interface UsuarioSelect {
   documentoUsu: string;
   nombreCompleto: string;
-  // Un usuario del endpoint de admin puede no tener rol asignado; los filtros
-  // por rol (=== 2 / !== 2) siguen siendo correctos con undefined.
-  codRolPrfUsu: number | undefined;
+  esAdminUsu: boolean | undefined;
 }
 
 // Para selector de clientes en el formulario

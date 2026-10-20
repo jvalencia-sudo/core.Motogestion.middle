@@ -24,6 +24,13 @@ export async function getPerfilName(): Promise<string | null> {
   return store.get("perfil")?.value ?? null;
 }
 
+// F1-12: admin-del-taller, independiente del catálogo de permisos (igual que
+// require_admin en el backend -- no depende de ninguna fila de perfiles_permisos).
+export async function getEsAdmin(): Promise<boolean> {
+  const store = await cookies();
+  return store.get("esAdmin")?.value === "true";
+}
+
 // Solo limpia las cookies del sistema (httpOnly, hay que borrarlas en el servidor).
 // La navegación a /auth/logout la hace el cliente con un full-reload (window.location)
 // para evitar que el router de Next intente un fetch RSC a una ruta que redirige a Auth0.
@@ -33,4 +40,5 @@ export async function logout() {
   store.delete("logged");
   store.delete("taller");
   store.delete("perfil");
+  store.delete("esAdmin");
 }

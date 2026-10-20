@@ -28,8 +28,15 @@ function req(
     logged = true,
     https = false,
     superadmin = false,
+    esAdmin = false,
     sub,
-  }: { logged?: boolean; https?: boolean; superadmin?: boolean; sub?: string } = {},
+  }: {
+    logged?: boolean;
+    https?: boolean;
+    superadmin?: boolean;
+    esAdmin?: boolean;
+    sub?: string;
+  } = {},
 ) {
   const headers = new Headers();
   const partes: string[] = [];
@@ -38,6 +45,7 @@ function req(
     partes.push(`permissions=${encodeURIComponent(permissionsCookie)}`);
   }
   if (superadmin) partes.push("superadmin=true");
+  if (esAdmin) partes.push("esAdmin=true");
   const subCookie = sub ?? (logged ? SESSION.user.sub : undefined);
   if (subCookie !== undefined) partes.push(`sub=${encodeURIComponent(subCookie)}`);
   if (partes.length) headers.set("cookie", partes.join("; "));
@@ -56,7 +64,7 @@ describe("middleware", () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        permissions: ["crear:productos"],
+        permissions: ["crear_editar:productos"],
         nombreTal: "Taller X",
         perfil: "Administrador",
       }),
@@ -73,7 +81,7 @@ describe("middleware", () => {
       // Y debe quedar guardado para el navegador, para las próximas peticiones.
       expect(res.cookies.get("logged")?.value).toBe("true");
       expect(res.cookies.get("permissions")?.value).toBe(
-        JSON.stringify(["crear:productos"]),
+        JSON.stringify(["crear_editar:productos"]),
       );
       expect(res.cookies.get("taller")?.value).toBe("Taller X");
       expect(res.cookies.get("perfil")?.value).toBe("Administrador");
@@ -87,7 +95,7 @@ describe("middleware", () => {
     getSession.mockResolvedValue(SESSION);
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ permissions: ["leer:marcas"] }),
+      json: async () => ({ permissions: ["ver:marcas"] }),
     });
     vi.stubGlobal("fetch", fetchMock);
     vi.stubEnv("BASE_API_URL", "http://backend.local");
@@ -109,7 +117,7 @@ describe("middleware", () => {
   it("/auth/logout borra las cookies propias de la app además de la sesión de Auth0", async () => {
     const sdkResponse = NextResponse.redirect("http://localhost:3000/");
     sdkResponse.cookies.set("logged", "true");
-    sdkResponse.cookies.set("permissions", JSON.stringify(["leer:marcas"]));
+    sdkResponse.cookies.set("permissions", JSON.stringify(["ver:marcas"]));
     sdkResponse.cookies.set("taller", "Taller Anterior");
     sdkResponse.cookies.set("perfil", "Mecánico");
     auth0Middleware.mockResolvedValue(sdkResponse);
@@ -149,7 +157,7 @@ describe("middleware", () => {
 
   it("ruta sin el permiso requerido redirige a /inicio (307, no cacheable por el navegador)", async () => {
     getSession.mockResolvedValue(SESSION);
-    const res = await middleware(req("/marcas", JSON.stringify(["leer:clientes"])));
+    const res = await middleware(req("/marcas", JSON.stringify(["ver:clientes"])));
     // 307 a propósito, no 308: un 308 es "Permanent Redirect" y los navegadores
     // lo cachean indefinidamente por URL incluso sin Cache-Control -- un
     // usuario al que luego SÍ se le otorga el permiso seguiría viendo la
@@ -161,7 +169,7 @@ describe("middleware", () => {
 
   it("ruta con el permiso correcto pasa (no redirige)", async () => {
     getSession.mockResolvedValue(SESSION);
-    const res = await middleware(req("/marcas", JSON.stringify(["leer:marcas"])));
+    const res = await middleware(req("/marcas", JSON.stringify(["ver:marcas"])));
     expect(res.headers.get("location")).toBeNull();
   });
 
@@ -184,71 +192,66 @@ describe("middleware", () => {
   // completo llegar a pagar un plan (el botón "Ver planes" no llevaba a
   // ningún lado).
   //
-  // F0-13 (cierre): el permiso pasó de "leer:productos" (lo tienen los 3
-  // roles) a "leer:users" -- mismo nivel que /mi-taller y /suscripcion. El
-  // backend siempre exigió Admin para POST /checkout (require_admin); con
-  // "leer:productos" un Mecánico/Recepcionista veía el botón "Pagar" y el
-  // backend se lo rechazaba.
+  // F1-12: estas 4 pantallas son `adminOnly` (gatean por la cookie "esAdmin",
+  // no por un permiso de catálogo) -- "users"/"perfiles-permisos" ya no
+  // existen como permisos, porque ningún endpoint los consultaba nunca
+  // (siempre fueron require_admin puro en el backend).
   it.each(["/planes", "/planes/gracias"])(
-    "%s es accesible con leer:users",
+    "%s es accesible siendo Administrador",
     async (path) => {
       getSession.mockResolvedValue(SESSION);
-      const res = await middleware(req(path, JSON.stringify(["leer:users"])));
+      const res = await middleware(req(path, JSON.stringify([]), { esAdmin: true }));
       expect(res.headers.get("location")).toBeNull();
     },
   );
 
   it.each(["/planes", "/planes/gracias"])(
-    "%s redirige a /inicio sin leer:users",
+    "%s redirige a /inicio sin ser Administrador",
     async (path) => {
       getSession.mockResolvedValue(SESSION);
-      const res = await middleware(req(path, JSON.stringify(["leer:productos"])));
+      const res = await middleware(req(path, JSON.stringify(["ver:productos"])));
       expect(res.status).toBe(307);
       expect(new URL(res.headers.get("location")!).pathname).toBe("/inicio");
     },
   );
 
-  // F0-13 (ext): "Configuración" vuelve al menú como "Mi taller", dentro del
-  // grupo Administrador -- mismo permiso que sus hermanos (Usuarios y roles,
-  // Suscripción), ya no "leer:productos" (el backend siempre exigió Admin
-  // para esta pantalla vía require_admin, el middleware ahora lo refleja).
-  it("/mi-taller es accesible con leer:users", async () => {
+  it("/mi-taller es accesible siendo Administrador", async () => {
     getSession.mockResolvedValue(SESSION);
-    const res = await middleware(req("/mi-taller", JSON.stringify(["leer:users"])));
+    const res = await middleware(req("/mi-taller", JSON.stringify([]), { esAdmin: true }));
     expect(res.headers.get("location")).toBeNull();
   });
 
-  it("/mi-taller redirige a /inicio sin leer:users", async () => {
+  it("/mi-taller redirige a /inicio sin ser Administrador", async () => {
     getSession.mockResolvedValue(SESSION);
-    const res = await middleware(req("/mi-taller", JSON.stringify(["leer:productos"])));
+    const res = await middleware(req("/mi-taller", JSON.stringify(["ver:productos"])));
     expect(res.status).toBe(307);
     expect(new URL(res.headers.get("location")!).pathname).toBe("/inicio");
   });
 
-  it("/suscripcion es accesible con leer:users", async () => {
+  it("/suscripcion es accesible siendo Administrador", async () => {
     getSession.mockResolvedValue(SESSION);
-    const res = await middleware(req("/suscripcion", JSON.stringify(["leer:users"])));
+    const res = await middleware(req("/suscripcion", JSON.stringify([]), { esAdmin: true }));
     expect(res.headers.get("location")).toBeNull();
   });
 
-  it("/suscripcion redirige a /inicio sin leer:users", async () => {
+  it("/suscripcion redirige a /inicio sin ser Administrador", async () => {
     getSession.mockResolvedValue(SESSION);
-    const res = await middleware(req("/suscripcion", JSON.stringify(["leer:productos"])));
+    const res = await middleware(req("/suscripcion", JSON.stringify(["ver:productos"])));
     expect(res.status).toBe(307);
     expect(new URL(res.headers.get("location")!).pathname).toBe("/inicio");
   });
 
   // F0-13: Usuarios, Roles y Vistas (ya quitadas en F0-11) y Perfiles y
   // Permisos se consolidaron en una sola pantalla.
-  it("/usuarios-roles es accesible con leer:users", async () => {
+  it("/usuarios-roles es accesible siendo Administrador", async () => {
     getSession.mockResolvedValue(SESSION);
-    const res = await middleware(req("/usuarios-roles", JSON.stringify(["leer:users"])));
+    const res = await middleware(req("/usuarios-roles", JSON.stringify([]), { esAdmin: true }));
     expect(res.headers.get("location")).toBeNull();
   });
 
-  it("/usuarios-roles redirige a /inicio sin leer:users ni leer:perfiles-permisos", async () => {
+  it("/usuarios-roles redirige a /inicio sin ser Administrador", async () => {
     getSession.mockResolvedValue(SESSION);
-    const res = await middleware(req("/usuarios-roles", JSON.stringify(["leer:productos"])));
+    const res = await middleware(req("/usuarios-roles", JSON.stringify(["ver:productos"])));
     expect(res.status).toBe(307);
     expect(new URL(res.headers.get("location")!).pathname).toBe("/inicio");
   });
@@ -257,7 +260,7 @@ describe("middleware", () => {
   // (esa tabla es "accion:recurso" por taller; esto es una marca de plataforma).
   it("/superadmin sin la cookie superadmin redirige a /inicio", async () => {
     getSession.mockResolvedValue(SESSION);
-    const res = await middleware(req("/superadmin", JSON.stringify(["leer:users"])));
+    const res = await middleware(req("/superadmin", JSON.stringify(["ver:productos"])));
     expect(res.status).toBe(307);
     expect(new URL(res.headers.get("location")!).pathname).toBe("/inicio");
   });
@@ -316,7 +319,7 @@ describe("middleware", () => {
       });
       const fetchMock = vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ permissions: ["leer:clientes"], esSuperAdmin: false }),
+        json: async () => ({ permissions: ["ver:clientes"], esSuperAdmin: false }),
       });
       vi.stubGlobal("fetch", fetchMock);
       vi.stubEnv("BASE_API_URL", "http://backend.local");
@@ -344,14 +347,15 @@ describe("middleware", () => {
       });
       const fetchMock = vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ permissions: ["leer:productos"] }), // B no tiene leer:users
+        json: async () => ({ permissions: ["ver:productos"] }), // B no es Administrador
       });
       vi.stubGlobal("fetch", fetchMock);
       vi.stubEnv("BASE_API_URL", "http://backend.local");
 
       try {
         const res = await middleware(
-          req("/usuarios-roles", JSON.stringify(["leer:users"]), { sub: "auth0|A" }),
+          // La cookie "esAdmin" es de A (stale) -- B, recién resuelto, no lo es.
+          req("/usuarios-roles", JSON.stringify([]), { sub: "auth0|A", esAdmin: true }),
         );
         expect(fetchMock).toHaveBeenCalled();
         expect(res.status).toBe(307);
@@ -390,12 +394,18 @@ function hojasDelMenu(items: MenuItem[]): MenuItem[] {
 }
 
 describe("el menú no muestra nada que el middleware vaya a bloquear", () => {
-  it.each(hojasDelMenu(MENU).map((item) => [item.title, item.url!, item.permission!]))(
+  it.each(
+    hojasDelMenu(MENU).map((item) => [item.title, item.url!, item.permission, item.adminOnly]),
+  )(
     "%s (%s) tiene una regla en PERMISSIONS que acepta %s",
-    (_title, url, permission) => {
-      const regla = PERMISSIONS.find((p) => new RegExp(p.path).test(url));
+    (_title, url, permission, adminOnly) => {
+      const regla = PERMISSIONS.find((p) => new RegExp(p.path).test(url as string));
       expect(regla, `No hay ninguna regla de PERMISSIONS que matchee ${url}`).toBeDefined();
-      expect(regla!.permissions).toContain(permission);
+      if (adminOnly) {
+        expect(regla!.adminOnly).toBe(true);
+      } else {
+        expect(regla!.permissions).toContain(permission);
+      }
     },
   );
 });

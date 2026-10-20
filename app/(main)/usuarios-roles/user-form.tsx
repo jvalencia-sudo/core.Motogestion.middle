@@ -27,9 +27,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { crearUsuario, editarUsuario } from "./actions";
-import { descripcionDeRol } from "./rol-descripcion";
 
-// Un solo campo de rol (codPrfUsu): el backend deriva el rol global del
+// Un solo campo de rol (codPrfUsu): el backend deriva si es admin o no del
 // perfil elegido, ya no se piden "rol" y "perfil" por separado (F0-13).
 const createUserSchema = z.object({
   documentoUsu: z.string().min(1, "El documento es requerido"),
@@ -81,9 +80,7 @@ export default function UserForm({ user, isEdit = false, perfiles }: UserFormPro
 
   const selectedPerfil = form.watch("codPrfUsu");
   const rolSeleccionado = perfiles.find((p) => p.codPrf === selectedPerfil);
-  // Perfiles propios del taller (F0-13 ext) tienen su propia descripción, mas
-  // específica que el texto enlatado por cod_rol_prf -- se prefiere esa.
-  const descripcion = rolSeleccionado?.descripcionPrf || descripcionDeRol(rolSeleccionado?.codRolPrf);
+  const descripcion = rolSeleccionado?.descripcionPrf;
 
   async function onSubmit(values: z.infer<typeof createUserSchema>) {
     setLoading(true);
