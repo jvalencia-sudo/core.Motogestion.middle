@@ -153,7 +153,6 @@ export default function OrdenForm({
       observacionOt: orden?.observacionOt || "",
       fechaElaboracionOt: orden?.fechaElaboracionOt || fechaHoy,
       fechaEntregaOt: orden?.fechaEntregaOt || "",
-      fechaFinGarantiaOt: orden?.fechaFinGarantiaOt || "",
       codOtEstOt: orden?.codOtEstOt || undefined,
       detalles: [],
     },
@@ -458,7 +457,6 @@ export default function OrdenForm({
           fechaEntregaOt: values.fechaEntregaOt,
           observacionOt: values.observacionOt,
           codOtEstOt: values.codOtEstOt,
-          fechaFinGarantiaOt: values.fechaFinGarantiaOt,
           documentoUsuRpOt: values.documentoUsuRpOt,
           documentoUsuMcOt: values.documentoUsuMcOt,
         };
@@ -825,7 +823,7 @@ export default function OrdenForm({
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="fechaElaboracionOt"
@@ -861,29 +859,6 @@ export default function OrdenForm({
                           />
                         </FormControl>
                         <FormDescription>No se puede seleccionar una fecha pasada</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="fechaFinGarantiaOt"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Fin de Garantía</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="date"
-                            {...field}
-                            min={(() => {
-                              const minDate = new Date();
-                              minDate.setDate(minDate.getDate() + 30);
-                              return `${minDate.getFullYear()}-${String(minDate.getMonth() + 1).padStart(2, '0')}-${String(minDate.getDate()).padStart(2, '0')}`;
-                            })()}
-                          />
-                        </FormControl>
-                        <FormDescription>Debe ser al menos 30 días desde hoy</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

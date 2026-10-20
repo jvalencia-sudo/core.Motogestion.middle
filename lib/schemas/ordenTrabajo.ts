@@ -54,18 +54,6 @@ export const createOrdenTrabajoSchema = z.object({
     .optional(),
   fechaElaboracionOt: z.string().min(1, "La fecha de elaboración es requerida"),
   fechaEntregaOt: z.string().optional(),
-  fechaFinGarantiaOt: z.string().optional().refine(
-    (date) => {
-      if (!date) return true; // Si no hay fecha, es válido (opcional)
-      const selectedDate = new Date(date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const minDate = new Date(today);
-      minDate.setDate(today.getDate() + 30);
-      return selectedDate >= minDate;
-    },
-    { message: "La garantía debe ser al menos 30 días desde hoy" }
-  ),
   codOtEstOt: z.number().int().positive("Debe seleccionar un estado").optional(),
   // F1-01: una orden rápida se crea sin productos -- se agregan después. El
   // backend rechaza igual pasar a Completada/Entregada sin al menos uno.
@@ -84,7 +72,6 @@ export const updateOrdenTrabajoSchema = z.object({
     .max(500, "La observación no puede exceder 500 caracteres")
     .optional(),
   codOtEstOt: z.number().int().positive("Debe seleccionar un estado").optional(),
-  fechaFinGarantiaOt: z.string().optional(),
   observacionCliOt: z
     .string()
     .max(500, "La observación no puede exceder 500 caracteres")

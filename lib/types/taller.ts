@@ -13,7 +13,6 @@ export interface TallerConfigEditable {
   telefonoTal: string | null;
   direccionTal: string | null;
   textoPieComprobante: string | null;
-  diasGarantiaPred: number;
 }
 
 // Respuesta de GET/PUT /talleres/config: lo editable más nombre/NIT/correo de

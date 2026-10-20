@@ -86,6 +86,7 @@ export default function ProductoForm({
       precioPro: producto?.precioPro || 0,
       stockPro: producto?.stockPro ?? 0,
       stockProMin: producto?.stockProMin ?? 0,
+      diasGarantiaPro: producto?.diasGarantiaPro ?? 0,
       impuestos: [],
     },
   });
@@ -107,6 +108,7 @@ export default function ProductoForm({
           precioPro: producto.precioPro,
           stockPro: producto.stockPro ?? 0,
           stockProMin: producto.stockProMin ?? 0,
+          diasGarantiaPro: producto.diasGarantiaPro ?? 0,
           impuestos: impuestosProducto,
         });
       }, 0);
@@ -447,6 +449,32 @@ export default function ProductoForm({
                     </>
                   )}
                 </div>
+
+                {/* F1-04: días de garantía que aporta este producto/servicio */}
+                <FormField
+                  control={form.control}
+                  name="diasGarantiaPro"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Días de garantía</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="3650"
+                          step="1"
+                          className="max-w-[200px]"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        0 = sin garantía. La fecha de garantía de una orden toma el
+                        mayor valor entre todos sus ítems.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </CardContent>
           </Card>
