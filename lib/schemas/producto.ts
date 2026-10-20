@@ -37,6 +37,12 @@ export const createProductoSchema = z
       .int("El stock mínimo debe ser un número entero")
       .min(0, "El stock mínimo debe ser mayor o igual a 0")
       .optional(),
+    diasGarantiaPro: z.coerce
+      .number()
+      .int("Los días de garantía deben ser un número entero")
+      .min(0, "Los días de garantía deben ser mayores o iguales a 0")
+      .max(3650, "Máximo 3650 días")
+      .optional(),
     impuestos: z.array(impuestoSchema).optional(),
   })
   // El stock solo aplica a los BIEN; para SERVICIO/PAQUETE se ignora.
@@ -77,6 +83,12 @@ export const updateProductoSchema = z
       .number()
       .int("El stock mínimo debe ser un número entero")
       .min(0, "El stock mínimo debe ser mayor o igual a 0")
+      .optional(),
+    diasGarantiaPro: z.coerce
+      .number()
+      .int("Los días de garantía deben ser un número entero")
+      .min(0, "Los días de garantía deben ser mayores o iguales a 0")
+      .max(3650, "Máximo 3650 días")
       .optional(),
     impuestos: z.array(impuestoSchema).optional(),
   })

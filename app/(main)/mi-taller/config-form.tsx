@@ -47,7 +47,6 @@ export default function ConfigForm({ config }: { config: TallerConfig }) {
       telefonoTal: config.telefonoTal ?? "",
       direccionTal: config.direccionTal ?? "",
       textoPieComprobante: config.textoPieComprobante ?? "",
-      diasGarantiaPred: config.diasGarantiaPred,
     },
   });
 
@@ -215,30 +214,6 @@ export default function ConfigForm({ config }: { config: TallerConfig }) {
                   <FormDescription>
                     Se imprime al final del comprobante de servicio (ej. política de
                     garantía, horario de atención). {(textoPie ?? "").length}/{MAX_TEXTO_PIE}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
-
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle>Garantía</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FormField
-              control={form.control}
-              name="diasGarantiaPred"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Días de garantía por defecto *</FormLabel>
-                  <FormControl>
-                    <Input type="number" min="0" max="365" step="1" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Se usa al entregar una orden sin una fecha de garantía propia.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

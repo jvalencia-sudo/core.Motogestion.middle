@@ -10,7 +10,6 @@ export default async function MiTallerPage() {
     telefonoTal: null,
     direccionTal: null,
     textoPieComprobante: null,
-    diasGarantiaPred: 30,
     nombreTal: "",
     nitTal: null,
     correoTal: null,

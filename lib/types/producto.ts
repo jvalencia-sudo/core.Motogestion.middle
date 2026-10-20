@@ -41,6 +41,9 @@ export interface Producto {
   stockProMin: number | null;
   codEstPro: number;
   precioPro: number;
+  // F1-04: días de garantía que aporta este producto/servicio a la orden
+  // que lo incluya (0 = sin garantía).
+  diasGarantiaPro: number;
   estadoProducto: string | null;
   impuestos: Impuesto[];
   componentes?: ComponentePaquete[];
@@ -54,6 +57,7 @@ export interface CreateProductoRequest {
   stockPro?: number;
   stockProMin?: number;
   precioPro: number;
+  diasGarantiaPro?: number;
   impuestos?: ImpuestoRequest[];
   componentes?: ComponentePaqueteRequest[];
 }
@@ -65,6 +69,7 @@ export interface UpdateProductoRequest {
   stockPro?: number;
   stockProMin?: number;
   precioPro?: number;
+  diasGarantiaPro?: number;
   impuestos?: ImpuestoRequest[];
   componentes?: ComponentePaqueteRequest[];
 }
