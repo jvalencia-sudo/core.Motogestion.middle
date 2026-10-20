@@ -137,6 +137,10 @@ export default function OrdenForm({
   // F1-06: marcar "no se cobra" exige un permiso específico -- solo Admin lo
   // tiene por defecto (control de fraude: el stock se descuenta igual).
   const canMarcarNoCobro = hasPermission("marcar_no_cobro:ordenes-trabajo");
+  // F1-05: una orden Entregada o Anulada ya resolvió su stock (entregado o
+  // devuelto) -- el backend rechaza (400) cualquier cambio de ítems en ese
+  // estado; este flag solo evita el viaje inútil deshabilitando los controles.
+  const ordenCerrada = isEdit && (orden?.codOtEstOt === 4 || orden?.codOtEstOt === 5);
 
   const form = useForm<CreateOrdenTrabajoFormData>({
     resolver: zodResolver(isEdit ? updateOrdenTrabajoSchema : createOrdenTrabajoSchema),
@@ -903,7 +907,7 @@ export default function OrdenForm({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {usuarios?.filter((u) => u.codRolPrfUsu !== 2).map((usuario) => (
+                            {usuarios?.map((usuario) => (
                               <SelectItem
                                 key={usuario.documentoUsu}
                                 value={usuario.documentoUsu}
@@ -934,7 +938,7 @@ export default function OrdenForm({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {usuarios?.filter((u) => u.codRolPrfUsu === 2).map((usuario) => (
+                            {usuarios?.map((usuario) => (
                               <SelectItem
                                 key={usuario.documentoUsu}
                                 value={usuario.documentoUsu}
@@ -1031,11 +1035,21 @@ export default function OrdenForm({
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {ordenCerrada && (
+                  <Alert>
+                    <AlertDescription>
+                      Esta orden está {orden?.codOtEstOt === 5 ? "anulada" : "entregada"} -- ya
+                      no se pueden agregar, editar ni quitar productos o servicios.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <Button
                   type="button"
                   variant="outline"
                   onClick={agregarDetalle}
                   className="w-full"
+                  disabled={ordenCerrada}
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Agregar Producto/Servicio
@@ -1094,6 +1108,7 @@ export default function OrdenForm({
                                 <Button
                                   variant="outline"
                                   role="combobox"
+                                  disabled={ordenCerrada}
                                   className={`w-full justify-between font-normal ${
                                     detalle.codProDeto === 0 ? "border-red-500" : ""
                                   }`}
@@ -1183,6 +1198,7 @@ export default function OrdenForm({
                               step="0.01"
                               max={esBien ? (stockDisponible || 99999) : 99}
                               placeholder="0"
+                              disabled={ordenCerrada}
                               value={detalle.cantidadDeto === 0 ? "" : detalle.cantidadDeto}
                               onChange={(e) => {
                                 const value = e.target.value === "" ? 0 : Number(e.target.value);
@@ -1229,6 +1245,7 @@ export default function OrdenForm({
                             {producto?.tipoPro === "SERVICIO" ? (
                               <Input
                                 type="text"
+                                disabled={ordenCerrada}
                                 value={new Intl.NumberFormat("es-CO").format(
                                   detalle.valorUnitarioDeto || 0
                                 )}
@@ -1286,6 +1303,7 @@ export default function OrdenForm({
                                     <Switch
                                       id={`cobrar-${detalle.id}`}
                                       checked={detalle.cobrarDeto ?? true}
+                                      disabled={ordenCerrada}
                                       onCheckedChange={(checked) => {
                                         actualizarDetalle(detalle.id, "cobrarDeto", checked);
                                         if (checked) {
@@ -1307,6 +1325,7 @@ export default function OrdenForm({
                                       placeholder="Motivo de la cortesía (obligatorio)"
                                       value={detalle.motivoNoCobroDeto ?? ""}
                                       maxLength={200}
+                                      disabled={ordenCerrada}
                                       onChange={(e) =>
                                         actualizarDetalle(detalle.id, "motivoNoCobroDeto", e.target.value)
                                       }
@@ -1326,6 +1345,7 @@ export default function OrdenForm({
                               variant="ghost"
                               size="sm"
                               onClick={() => eliminarDetalle(detalle.id)}
+                              disabled={ordenCerrada}
                               className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             >
                               <X className="h-4 w-4 mr-1" />

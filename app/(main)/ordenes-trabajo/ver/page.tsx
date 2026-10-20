@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { obtenerOrdenTrabajo } from "../actions";
+import { getEsAdmin, getPermissions } from "../../actions";
 import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { GenerarPdfButton } from "./generar-pdf-button";
+import { AnularOrdenDialog } from "./anular-orden-dialog";
+import { HistorialOrden } from "./historial-orden";
 
 interface VerOrdenPageProps {
   searchParams: Promise<{ consecutivo?: string }>;
@@ -27,6 +30,11 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
   if (!orden) {
     notFound();
   }
+
+  const [permissions, esAdmin] = await Promise.all([getPermissions(), getEsAdmin()]);
+  const ESTADO_ANULADA = 5;
+  const estaAnulada = orden.codOtEstOt === ESTADO_ANULADA;
+  const puedeAnular = permissions.includes("anular:ordenes-trabajo") && !estaAnulada;
 
   const formatearFecha = (fecha: string | null | undefined) => {
     if (!fecha) return "-";
@@ -82,7 +90,28 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
               label="Generar Comprobante"
             />
           )}
+          {puedeAnular && <AnularOrdenDialog consecutivo={orden.consecutivoOt} />}
         </div>
+
+        {estaAnulada && (
+          <Card className="border-destructive/50">
+            <CardHeader>
+              <CardTitle className="text-destructive">Orden anulada</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Motivo</p>
+                  <p className="text-base">{orden.motivoAnulacionOt || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Anulada el</p>
+                  <p className="text-base">{formatearFecha(orden.fechaAnulacionOt)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Card: Información General */}
         <Card>
@@ -367,6 +396,8 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
             )}
           </CardContent>
         </Card>
+
+        {esAdmin && <HistorialOrden consecutivo={orden.consecutivoOt} />}
       </div>
     </>
   );

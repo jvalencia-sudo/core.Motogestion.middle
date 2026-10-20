@@ -18,8 +18,6 @@ import MatrizPermisosDialog from "./matriz-permisos-dialog";
 import PerfilFormDialog from "./perfil-form-dialog";
 import { eliminarPerfil } from "./actions";
 
-const ADMIN_ROL = 1;
-
 export default function RolesTab({
   perfiles,
   catalogo,
@@ -32,7 +30,7 @@ export default function RolesTab({
   const [eliminando, setEliminando] = useState<number | null>(null);
   const router = useRouter();
 
-  const perfilesNoAdmin = perfiles.filter((p) => p.codRolPrf !== ADMIN_ROL);
+  const perfilesNoAdmin = perfiles.filter((p) => !p.esAdmin);
 
   async function handleEliminar(perfil: PerfilDetallado) {
     if (!confirm(`¿Eliminar el rol "${perfil.nombrePrf}"?`)) return;
@@ -57,7 +55,7 @@ export default function RolesTab({
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {perfiles.map((perfil) => {
-          const esAdmin = perfil.codRolPrf === ADMIN_ROL;
+          const esAdmin = perfil.esAdmin;
           return (
             <Card key={perfil.codPrf}>
               <CardContent className="flex flex-col gap-3 p-5">

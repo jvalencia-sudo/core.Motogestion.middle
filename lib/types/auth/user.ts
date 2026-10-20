@@ -17,7 +17,7 @@ export type User = {
   codTipoUsu: number; // 1=cliente, 2=admin, etc
   subIdUsu: string; // ID de Auth0
   codPrfUsu: number; // Código de perfil
-  codRolPrfUsu: number; // Código de rol
+  esAdminUsu: boolean; // F1-12: fusión perfil+rol
 };
 
 /**
@@ -71,8 +71,8 @@ export type ChangePasswordRequest = {
 
 /**
  * Request para actualizar el rol (perfil) de un usuario
- * (PUT /api/admin/users/{documento_usu}/profile). El backend deriva el rol
- * global del perfil elegido.
+ * (PUT /api/admin/users/{documento_usu}/profile). El backend deriva si es
+ * admin o no del perfil elegido.
  */
 export type UpdateProfileRequest = {
   codPrfUsu: number;
@@ -87,7 +87,7 @@ export type UserFilterParams = {
   documentoUsu?: string; // Buscar por documento de identidad
   codEstUsu?: number; // Filtrar por estado (1=activo, 0=inactivo)
   codPrfUsu?: number; // Filtrar por código de perfil
-  codRolPrfUsu?: number; // Filtrar por código de rol
+  esAdminUsu?: boolean; // Filtrar por administradores
   codTipoUsu?: number; // Filtrar por tipo de usuario
   limit?: number; // Límite de resultados (default=50, min=1, max=500)
   offset?: number; // Offset para paginación (default=0)
@@ -112,6 +112,5 @@ export type VwUsuarioPerfil = {
   estadoUsuario: string;
   perfil: string;
   descripcionPerfil: string;
-  rol: string;
-  descripcionRol: string;
+  esAdminUsu: boolean;
 };

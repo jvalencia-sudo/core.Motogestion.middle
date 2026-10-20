@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/toaster";
 import { PermissionProvider } from "@/hooks/use-permissions";
-import { getPermissions, getTallerName } from "./actions";
+import { getEsAdmin, getPermissions, getTallerName } from "./actions";
 import SuscripcionBanner from "./suscripcion-banner";
 
 // Todo lo que cuelga de (main) está detrás de sesión y usa cookies: nunca
@@ -26,6 +26,7 @@ export default async function MainLayout({
   readonly children: React.ReactNode;
 }) {
   const permissions = await getPermissions();
+  const esAdmin = await getEsAdmin();
 
   // Etiqueta el scope de Sentry de este request con el taller — así cualquier
   // error capturado más abajo en el render/acciones de esta página queda
@@ -37,7 +38,7 @@ export default async function MainLayout({
   }
 
   return (
-    <PermissionProvider permissions={permissions}>
+    <PermissionProvider permissions={permissions} esAdmin={esAdmin}>
       <SidebarProvider>
         <AppSidebar variant="inset" />
         <SidebarInset>

@@ -28,34 +28,39 @@ type NavItem = {
   items?: NavItem[];
 };
 
-// Una hoja (tiene url) SIEMPRE exige su permiso real; un grupo (sin url, con
-// items) no tiene permiso propio, se queda solo si le sobrevive algún hijo.
-// Ya no existe la regla vieja de "sin ':' se muestra siempre" (F0-13).
-function filtrarMenu(items: MenuItem[], permissions: string[]): NavItem[] {
+// Una hoja (tiene url) SIEMPRE exige su permiso real, o `adminOnly` (F1-12:
+// pantallas que el backend siempre gateó con require_admin, no con un
+// permiso de catálogo); un grupo (sin url, con items) no tiene permiso
+// propio, se queda solo si le sobrevive algún hijo.
+function filtrarMenu(items: MenuItem[], permissions: string[], esAdmin: boolean): NavItem[] {
   return items
     .map((item): NavItem | null => {
       if (item.items) {
-        const hijos = filtrarMenu(item.items, permissions);
+        const hijos = filtrarMenu(item.items, permissions, esAdmin);
         if (hijos.length === 0) return null;
         return { title: item.title, url: "", icon: item.icon, items: hijos };
       }
-      if (!item.permission || !permissions.includes(item.permission)) return null;
+      if (item.adminOnly) {
+        if (!esAdmin) return null;
+      } else if (!item.permission || !permissions.includes(item.permission)) {
+        return null;
+      }
       return { title: item.title, url: item.url ?? "", icon: item.icon };
     })
     .filter((i): i is NavItem => i !== null);
 }
 
-function getMenu(permissions: string[]): NavItem[] {
-  return filtrarMenu(MENU, permissions);
+function getMenu(permissions: string[], esAdmin: boolean): NavItem[] {
+  return filtrarMenu(MENU, permissions, esAdmin);
 }
 
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { permissions } = usePermissions();
+  const { permissions, esAdmin } = usePermissions();
 
   const items = React.useMemo(() => {
-    return getMenu(permissions);
-  }, [permissions]);
+    return getMenu(permissions, esAdmin);
+  }, [permissions, esAdmin]);
 
   return (
     <Sidebar collapsible="icon" {...props}>

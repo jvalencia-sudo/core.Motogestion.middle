@@ -1,53 +1,64 @@
 // Agrupa el catálogo de permisos ("accion:recurso") en los módulos que el
-// administrador reconoce, para la matriz de la pestaña Roles (F0-13).
+// administrador reconoce, para la matriz de la pestaña Roles (F0-13/F1-12).
 //
-// Solo se listan acá los recursos que tienen pantalla real hoy. El catálogo
-// de 48 permisos trae además "operations"/"orders" (restos de una plantilla
-// de logística que nunca se usó) y "roles"/"vistas" (catálogos que F0-11 dejó
-// de solo lectura, ya no se gestionan por perfil) -- al no estar en este
-// diccionario, simplemente no aparecen en la matriz. Así se cumple "la matriz
-// no muestra permisos de la plantilla de logística" sin tocar el catálogo en
-// la BD, y el día que F1-12 limpie el catálogo de verdad, esta matriz no
-// necesita ningún cambio.
+// F1-12 limpió el catálogo de verdad en el backend: ya no trae "operations"/
+// "orders" (plantilla de logística) ni "roles"/"vistas"/"users"/
+// "perfiles-permisos" (nunca se consultaban), y cada módulo tiene 3 permisos
+// (no 4): ver / crear_editar / eliminar_o_anular.
 export const MODULOS: Record<string, string> = {
   clientes: "Clientes y motos",
   marcas: "Clientes y motos",
   motos: "Clientes y motos",
   "ordenes-trabajo": "Órdenes de trabajo",
-  productos: "Productos e inventario",
+  tablero: "Tablero",
+  productos: "Productos",
+  inventario: "Inventario",
   reclamos: "Reclamos",
-  users: "Usuarios y configuración",
-  "perfiles-permisos": "Usuarios y configuración",
+  talleres: "Configuración",
+  planes: "Configuración",
+  impuestos: "Configuración",
 };
 
 // Orden fijo en el que se muestran las filas de la matriz (no alfabético).
 export const ORDEN_MODULOS = [
   "Órdenes de trabajo",
+  "Tablero",
   "Clientes y motos",
-  "Productos e inventario",
+  "Productos",
+  "Inventario",
   "Reclamos",
-  "Usuarios y configuración",
+  "Configuración",
 ];
 
 export const COLUMNAS = [
-  { accion: "leer", label: "Ver" },
-  { accion: "crear_actualizar", label: "Crear y editar" },
-  { accion: "eliminar", label: "Eliminar" },
+  { accion: "ver", label: "Ver" },
+  { accion: "crear_editar", label: "Crear y editar" },
+  { accion: "eliminar_o_anular", label: "Eliminar o anular" },
 ] as const;
 
 export type AccionColumna = (typeof COLUMNAS)[number]["accion"];
 
-// "accion:recurso" -> { modulo, columna } | null si el recurso no está mapeado.
+// Permisos "acciones sensibles" (F1-05/F1-12): fuera de la grilla estándar
+// ver/crear_editar/eliminar_o_anular, se muestran en una sección aparte de
+// la matriz (un switch por permiso, no una celda de columna).
+export const PERMISOS_SENSIBLES: { nombrePrm: string; etiqueta: string }[] = [
+  { nombrePrm: "marcar_no_cobro:ordenes-trabajo", etiqueta: "Marcar ítems de una orden como \"no se cobra\"" },
+  { nombrePrm: "anular:ordenes-trabajo", etiqueta: "Anular una orden de trabajo completa" },
+  { nombrePrm: "ajustar:inventario", etiqueta: "Ajustar inventario (entradas y tomas físicas)" },
+  { nombrePrm: "ver_costos:productos", etiqueta: "Ver costos y márgenes de productos" },
+  { nombrePrm: "ver_todo:tablero", etiqueta: "Ver el tablero completo (todas las órdenes) y filtrar por mecánico" },
+];
+
+// "accion:recurso" -> { modulo, columna } | null si el recurso no está
+// mapeado o si es una acción sensible (esas se manejan aparte).
 export function ubicarEnMatriz(
   nombrePrm: string,
 ): { modulo: string; columna: AccionColumna } | null {
   const [accion, recurso] = nombrePrm.split(":");
   const modulo = MODULOS[recurso];
   if (!modulo) return null;
-  if (accion === "leer") return { modulo, columna: "leer" };
-  if (accion === "eliminar") return { modulo, columna: "eliminar" };
-  if (accion === "crear" || accion === "actualizar") {
-    return { modulo, columna: "crear_actualizar" };
+  if (accion !== "ver" && accion !== "crear_editar" && accion !== "eliminar_o_anular") {
+    return null;
   }
-  return null;
+  return { modulo, columna: accion };
 }

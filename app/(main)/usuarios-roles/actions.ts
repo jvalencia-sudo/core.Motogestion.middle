@@ -103,10 +103,8 @@ export async function obtenerCatalogoPermisos() {
   return await appFetch<Permiso[]>("/api/permiso");
 }
 
-export async function obtenerPermisosAsignados(codPrf: number, codRol: number) {
-  return await appFetch<PerfilPermiso[]>(
-    `/api/perfil-permiso/perfil/${codPrf}?cod_rol=${codRol}`
-  );
+export async function obtenerPermisosAsignados(codPrf: number) {
+  return await appFetch<PerfilPermiso[]>(`/api/perfil-permiso/perfil/${codPrf}`);
 }
 
 export async function reemplazarPermisos(

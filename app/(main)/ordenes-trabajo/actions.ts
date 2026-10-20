@@ -7,12 +7,12 @@ import {
   OrdenTrabajoResponse,
   CreateOrdenTrabajoRequest,
   UpdateOrdenTrabajoRequest,
-  OrdenTrabajoOperationResponse,
   MotoSelect,
   ProductoSelect,
   UsuarioSelect,
   OtEstado,
   ClienteSelect,
+  HistorialEvento,
 } from "@/lib/types/ordenTrabajo";
 import { Cliente, CreateClienteRequest } from "@/lib/types/cliente";
 import { Moto, CreateMotoRequest } from "@/lib/types/moto";
@@ -39,7 +39,7 @@ type ProductoRaw = {
 type UsuarioSelectRaw = {
   documentoUsu: string;
   nombreCompleto: string;
-  codRolPrfUsu: number;
+  esAdminUsu: boolean;
 };
 type EstadoOtRaw = {
   codOtEst: number;
@@ -54,7 +54,7 @@ type UsuarioAdminRaw = {
   correoUsu: string;
   subIdUsu?: string;
   codPrfUsu?: number;
-  codRolPrfUsu?: number;
+  esAdminUsu?: boolean;
 };
 
 
@@ -223,17 +223,38 @@ export async function generarComprobantePdfOrdenTrabajo(consecutivo: number) {
 }
 
 /**
- * Eliminar orden de trabajo
+ * F1-05: anula una orden completa (motivo obligatorio). El backend devuelve
+ * al inventario los bienes de la orden y deja constancia de quién/cuándo --
+ * no hay (ni habrá) una forma de BORRAR una orden desde la app.
  */
-export async function eliminarOrdenTrabajo(consecutivo: number) {
-  const resp = await appFetch<OrdenTrabajoOperationResponse>(
-    `/api/ordenes-trabajo/${consecutivo}`,
+export async function anularOrdenTrabajo(consecutivo: number, motivo: string) {
+  const resp = await appFetch<OrdenTrabajoResponse>(
+    `/api/ordenes-trabajo/${consecutivo}/anular`,
     {
-      method: "DELETE",
+      method: "PATCH",
+      body: JSON.stringify({ motivo }),
+      headers: {
+        "Content-Type": "application/json",
+      },
     }
   );
 
   return resp;
+}
+
+/**
+ * F1-05: historial de cambios de una orden (lee audit_log). Solo el Admin
+ * del taller puede verlo -- el backend ya lo protege con 403.
+ */
+export async function obtenerHistorialOrden(consecutivo: number): Promise<HistorialEvento[]> {
+  try {
+    const response = await appFetch(`/api/ordenes-trabajo/${consecutivo}/historial`);
+    if (response.error || !response.data) return [];
+    return response.data as HistorialEvento[];
+  } catch (error) {
+    console.error("Error obteniendo historial de la orden:", error);
+    return [];
+  }
 }
 
 /**
@@ -303,7 +324,7 @@ export async function obtenerUsuariosSelect(): Promise<UsuarioSelect[]> {
     const usuarios = (response.data as UsuarioSelectRaw[]).map((usuario) => ({
       documentoUsu: usuario.documentoUsu,
       nombreCompleto: usuario.nombreCompleto,
-      codRolPrfUsu: usuario.codRolPrfUsu,
+      esAdminUsu: usuario.esAdminUsu,
     }));
     return usuarios;
   } catch (error) {
@@ -433,7 +454,7 @@ export async function obtenerUsuariosAdmin() {
       correoUsu: user.correoUsu,
       subIdUsu: user.subIdUsu,
       codPrfUsu: user.codPrfUsu,
-      codRolPrfUsu: user.codRolPrfUsu,
+      esAdminUsu: user.esAdminUsu,
     }));
   } catch (error) {
     console.error("Error obteniendo usuarios admin:", error);

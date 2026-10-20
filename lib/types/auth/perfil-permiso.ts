@@ -1,12 +1,10 @@
 export type PerfilPermiso = {
   codPrf: number;
   nombrePrf: string;
-  nombreRol: string;
+  esAdmin: boolean;
   codPrm: number;
   nombrePrm: string;
   descripcionPrm: string;
-  nombreVis: string;
-  rutaVis: string;
   estadoPermiso: string;
 };
 

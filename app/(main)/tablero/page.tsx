@@ -29,8 +29,12 @@ const COLUMNAS = [
   { cod: 3, titulo: "Completada", barra: "bg-emerald-500" },
   { cod: 4, titulo: "Entregada", barra: "bg-slate-500" },
   { cod: 6, titulo: "Garantía", barra: "bg-violet-500" },
-  { cod: 5, titulo: "Cancelada", barra: "bg-rose-500" },
+  { cod: 5, titulo: "Anulada", barra: "bg-rose-500" },
 ];
+// F1-05: Anulada es de solo lectura en el tablero -- a ella solo se llega vía
+// el flujo de anular (motivo obligatorio + devolución de stock), nunca
+// arrastrando; y una vez ahí, la orden no se mueve a ningún otro estado.
+const COD_ANULADA = 5;
 
 function diasEnTaller(fecha: string | null): number | null {
   if (!fecha) return null;
@@ -74,6 +78,7 @@ export default function TableroPage() {
   }, [seleccion, cargar]);
 
   function puedeSoltar(cod: number): boolean {
+    if (cod === COD_ANULADA) return false;
     return esGestor || ESTADOS_MECANICO.includes(cod);
   }
 
@@ -186,12 +191,16 @@ export default function TableroPage() {
                   return (
                     <Card
                       key={it.consecutivoOt}
-                      draggable
+                      draggable={col.cod !== COD_ANULADA}
                       onDragStart={(e) => {
                         e.dataTransfer.effectAllowed = "move";
                         e.dataTransfer.setData("text/plain", String(it.consecutivoOt));
                       }}
-                      className="cursor-grab active:cursor-grabbing"
+                      className={cn(
+                        col.cod === COD_ANULADA
+                          ? "cursor-default"
+                          : "cursor-grab active:cursor-grabbing",
+                      )}
                     >
                       <CardContent className="flex flex-col gap-1.5 p-3">
                         <div className="flex items-center justify-between gap-2">

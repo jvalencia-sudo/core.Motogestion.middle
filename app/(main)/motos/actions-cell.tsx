@@ -33,6 +33,8 @@ export function ActionsCell({ moto }: ActionsCellProps) {
         const resp = await eliminarMoto(moto.placaMot);
         if (!resp.error) {
           window.location.reload();
+        } else {
+          alert(resp.error);
         }
       } finally {
         setIsDeleting(false);

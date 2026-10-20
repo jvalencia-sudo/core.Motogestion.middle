@@ -7,5 +7,6 @@ export type UserWithPermissions = {
   permissions: string[];
   nombreTal?: string | null;
   perfil?: string | null;
+  esAdminUsu?: boolean | null;
   esSuperAdmin?: boolean | null;
 };

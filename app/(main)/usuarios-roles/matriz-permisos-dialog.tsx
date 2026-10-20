@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,18 +19,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { PerfilDetallado } from "@/lib/types/auth/perfil";
 import { Permiso } from "@/lib/types/auth/permiso";
 import { obtenerPermisosAsignados, reemplazarPermisos } from "./actions";
-import { ORDEN_MODULOS, ubicarEnMatriz, AccionColumna } from "@/lib/permisos-modulos";
+import { ORDEN_MODULOS, ubicarEnMatriz, AccionColumna, PERMISOS_SENSIBLES } from "@/lib/permisos-modulos";
 import { PLANTILLA_MECANICO, PLANTILLA_RECEPCION } from "@/lib/permisos-plantillas";
 import { useRouter } from "next/navigation";
 
 const VERBO: Record<string, string> = {
-  leer: "ver",
-  crear: "crear",
-  actualizar: "editar",
-  eliminar: "eliminar",
+  ver: "ver",
+  crear_editar: "crear y editar",
+  eliminar_o_anular: "eliminar o anular",
 };
 
 function recursoLegible(recurso: string): string {
@@ -60,7 +61,7 @@ export default function MatrizPermisosDialog({ perfil, catalogo, open, onOpenCha
     let cancelado = false;
     setCargando(true);
     setError(undefined);
-    obtenerPermisosAsignados(perfil.codPrf, perfil.codRolPrf).then((resp) => {
+    obtenerPermisosAsignados(perfil.codPrf).then((resp) => {
       if (cancelado) return;
       if (resp.error || !resp.data) {
         setError(resp.error || "No se pudieron cargar los permisos del rol.");
@@ -74,7 +75,7 @@ export default function MatrizPermisosDialog({ perfil, catalogo, open, onOpenCha
     return () => {
       cancelado = true;
     };
-  }, [open, perfil.codPrf, perfil.codRolPrf]);
+  }, [open, perfil.codPrf]);
 
   const matriz = useMemo<Matriz>(() => {
     const m: Matriz = {};
@@ -94,6 +95,25 @@ export default function MatrizPermisosDialog({ perfil, catalogo, open, onOpenCha
     for (const p of catalogo) map.set(p.codPrm, p.nombrePrm);
     return map;
   }, [catalogo]);
+
+  // Acciones sensibles (F1-05/F1-12): fuera de la grilla, un switch por
+  // permiso. Solo se listan las que de verdad existen en el catálogo.
+  const sensiblesDisponibles = useMemo(() => {
+    const idPorNombre = new Map(catalogo.map((p) => [p.nombrePrm, p.codPrm]));
+    return PERMISOS_SENSIBLES.flatMap(({ nombrePrm, etiqueta }) => {
+      const codPrm = idPorNombre.get(nombrePrm);
+      return codPrm === undefined ? [] : [{ codPrm, etiqueta }];
+    });
+  }, [catalogo]);
+
+  function alternarSensible(codPrm: number) {
+    setSeleccion((prev) => {
+      const next = new Set(prev);
+      if (next.has(codPrm)) next.delete(codPrm);
+      else next.add(codPrm);
+      return next;
+    });
+  }
 
   function celdaMarcada(modulo: string, columna: AccionColumna): boolean {
     const ids = matriz[modulo]?.[columna];
@@ -125,26 +145,38 @@ export default function MatrizPermisosDialog({ perfil, catalogo, open, onOpenCha
     setSeleccion(next);
   }
 
+  const etiquetaSensiblePorNombre = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const { nombrePrm, etiqueta } of PERMISOS_SENSIBLES) map.set(nombrePrm, etiqueta);
+    return map;
+  }, []);
+
+  const describirPermiso = useCallback(
+    (nombre: string): string => {
+      const sensible = etiquetaSensiblePorNombre.get(nombre);
+      if (sensible) return sensible.charAt(0).toLowerCase() + sensible.slice(1);
+      const [accion, recurso] = nombre.split(":");
+      return `${VERBO[accion] ?? accion} ${recursoLegible(recurso)}`;
+    },
+    [etiquetaSensiblePorNombre],
+  );
+
   const resumenCambios = useMemo(() => {
     const frases: string[] = [];
     for (const id of seleccion) {
       if (original.has(id)) continue;
       const nombre = nombrePorCodPrm.get(id);
       if (!nombre) continue;
-      const [accion, recurso] = nombre.split(":");
-      frases.push(`${perfil.nombrePrf} podrá ${VERBO[accion] ?? accion} ${recursoLegible(recurso)}`);
+      frases.push(`${perfil.nombrePrf} podrá ${describirPermiso(nombre)}`);
     }
     for (const id of original) {
       if (seleccion.has(id)) continue;
       const nombre = nombrePorCodPrm.get(id);
       if (!nombre) continue;
-      const [accion, recurso] = nombre.split(":");
-      frases.push(
-        `${perfil.nombrePrf} ya no podrá ${VERBO[accion] ?? accion} ${recursoLegible(recurso)}`
-      );
+      frases.push(`${perfil.nombrePrf} ya no podrá ${describirPermiso(nombre)}`);
     }
     return frases;
-  }, [seleccion, original, nombrePorCodPrm, perfil.nombrePrf]);
+  }, [seleccion, original, nombrePorCodPrm, perfil.nombrePrf, describirPermiso]);
 
   const router = useRouter();
 
@@ -203,14 +235,14 @@ export default function MatrizPermisosDialog({ perfil, catalogo, open, onOpenCha
                     <TableHead>Módulo</TableHead>
                     <TableHead className="text-center">Ver</TableHead>
                     <TableHead className="text-center">Crear y editar</TableHead>
-                    <TableHead className="text-center">Eliminar</TableHead>
+                    <TableHead className="text-center">Eliminar o anular</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {ORDEN_MODULOS.filter((modulo) => matriz[modulo]).map((modulo) => (
                     <TableRow key={modulo}>
                       <TableCell className="font-medium">{modulo}</TableCell>
-                      {(["leer", "crear_actualizar", "eliminar"] as AccionColumna[]).map(
+                      {(["ver", "crear_editar", "eliminar_o_anular"] as AccionColumna[]).map(
                         (columna) => (
                           <TableCell key={columna} className="text-center">
                             {matriz[modulo]?.[columna] ? (
@@ -227,6 +259,24 @@ export default function MatrizPermisosDialog({ perfil, catalogo, open, onOpenCha
                 </TableBody>
               </Table>
             </div>
+
+            {sensiblesDisponibles.length > 0 && (
+              <div className="flex flex-col gap-3 rounded-md border p-3">
+                <p className="text-sm font-medium">Permisos especiales</p>
+                {sensiblesDisponibles.map(({ codPrm, etiqueta }) => (
+                  <div key={codPrm} className="flex items-center justify-between gap-3">
+                    <Label htmlFor={`sensible-${codPrm}`} className="text-sm font-normal">
+                      {etiqueta}
+                    </Label>
+                    <Switch
+                      id={`sensible-${codPrm}`}
+                      checked={seleccion.has(codPrm)}
+                      onCheckedChange={() => alternarSensible(codPrm)}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
 
             {resumenCambios.length > 0 && (
               <div className="rounded-md border bg-muted/50 p-3 text-sm">

@@ -3,22 +3,21 @@ export type Perfil = {
     nombrePrf: string;
     descripcionPrf: string;
     codEstPrf: number;
-    codRolPrf: number;
+    esAdmin: boolean;
 };
 
 export type PerfilDetallado = {
     codPrf: number;
     nombrePrf: string;
     descripcionPrf: string;
-    codRolPrf: number;
+    esAdmin: boolean;
     codEstPrf: number;
     nombreEstPrf: string;
-    nombreRolPrf: string;
     numUsuarios: number;
 };
 
-// Rol propio del taller (F0-13 ext): crear/editar nunca reciben cod_rol_prf
-// -- el backend siempre fuerza un rol no-administrador.
+// Rol propio del taller (F0-13/F1-12 ext): crear/editar nunca reciben
+// esAdmin -- el backend siempre fuerza un perfil no-administrador.
 export type CrearPerfilRequest = {
     nombrePrf: string;
     descripcionPrf: string;

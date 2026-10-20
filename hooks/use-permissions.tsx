@@ -3,21 +3,25 @@ import { createContext, useContext } from "react";
 
 type PermissionContextType = {
   permissions: string[];
+  esAdmin: boolean;
 };
 
 export const PermissionContext = createContext<PermissionContextType>({
   permissions: [],
+  esAdmin: false,
 });
 
 export function PermissionProvider({
   children,
   permissions,
+  esAdmin = false,
 }: {
   readonly children: React.ReactNode;
   readonly permissions: string[];
+  readonly esAdmin?: boolean;
 }) {
   return (
-    <PermissionContext.Provider value={{ permissions }}>
+    <PermissionContext.Provider value={{ permissions, esAdmin }}>
       {children}
     </PermissionContext.Provider>
   );
@@ -33,5 +37,6 @@ export function usePermissions() {
   return {
     hasPermission,
     permissions: context.permissions,
+    esAdmin: context.esAdmin,
   };
 }
