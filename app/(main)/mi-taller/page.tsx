@@ -10,9 +10,18 @@ export default async function MiTallerPage() {
     telefonoTal: null,
     direccionTal: null,
     textoPieComprobante: null,
+    nombreComercialTal: null,
+    whatsappTal: null,
+    colorPrincipalTal: "#00B06E",
+    textoCondicionesTal: null,
+    textoPieTal: null,
+    mostrarPreciosUnitariosTal: true,
+    mostrarMecanicoTal: true,
+    mostrarFirmaClienteTal: false,
     nombreTal: "",
     nitTal: null,
     correoTal: null,
+    tieneLogo: false,
   };
 
   return (

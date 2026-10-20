@@ -20,14 +20,20 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { tallerConfigSchema, TallerConfigFormData } from "@/lib/schemas/taller";
 import { TallerConfig } from "@/lib/types/taller";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { guardarConfigTaller } from "./actions";
+import { LogoUploader } from "./logo-uploader";
+import { VistaPreviaPdf } from "./vista-previa-pdf";
 
 const MAX_TEXTO_PIE = 300;
+const MAX_TEXTO_CONDICIONES = 1500;
+const MAX_TEXTO_PIE_ORDEN = 200;
 
 const MODOS = [
   { value: "HORAS", label: "Por horas (tarifa fija)", hint: "Se cobra horas × tarifa por hora." },
@@ -47,6 +53,14 @@ export default function ConfigForm({ config }: { config: TallerConfig }) {
       telefonoTal: config.telefonoTal ?? "",
       direccionTal: config.direccionTal ?? "",
       textoPieComprobante: config.textoPieComprobante ?? "",
+      nombreComercialTal: config.nombreComercialTal ?? "",
+      whatsappTal: config.whatsappTal ?? "",
+      colorPrincipalTal: config.colorPrincipalTal,
+      textoCondicionesTal: config.textoCondicionesTal ?? "",
+      textoPieTal: config.textoPieTal ?? "",
+      mostrarPreciosUnitariosTal: config.mostrarPreciosUnitariosTal,
+      mostrarMecanicoTal: config.mostrarMecanicoTal,
+      mostrarFirmaClienteTal: config.mostrarFirmaClienteTal,
     },
   });
 
@@ -55,6 +69,16 @@ export default function ConfigForm({ config }: { config: TallerConfig }) {
     control: form.control,
     name: "textoPieComprobante",
     defaultValue: config.textoPieComprobante ?? "",
+  });
+  const textoCondiciones = useWatch({
+    control: form.control,
+    name: "textoCondicionesTal",
+    defaultValue: config.textoCondicionesTal ?? "",
+  });
+  const textoPieOrden = useWatch({
+    control: form.control,
+    name: "textoPieTal",
+    defaultValue: config.textoPieTal ?? "",
   });
 
   async function onSubmit(values: TallerConfigFormData) {
@@ -219,6 +243,165 @@ export default function ConfigForm({ config }: { config: TallerConfig }) {
                 </FormItem>
               )}
             />
+          </CardContent>
+        </Card>
+
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>Personalización de la orden</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div className="space-y-4">
+                <div>
+                  <FormLabel>Logo</FormLabel>
+                  <div className="mt-2">
+                    <LogoUploader tieneLogo={config.tieneLogo} />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="nombreComercialTal"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nombre comercial</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value ?? ""} placeholder={config.nombreTal} />
+                        </FormControl>
+                        <FormDescription>Si lo dejas vacío, se usa &quot;{config.nombreTal}&quot;.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="whatsappTal"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>WhatsApp</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value ?? ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="colorPrincipalTal"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Color principal</FormLabel>
+                      <div className="flex items-center gap-2">
+                        <FormControl>
+                          <Input
+                            type="color"
+                            className="h-9 w-14 p-1"
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        </FormControl>
+                        <Input
+                          value={field.value}
+                          onChange={field.onChange}
+                          className="w-32 font-mono"
+                          maxLength={7}
+                        />
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="textoCondicionesTal"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Condiciones (garantía, políticas, etc.)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          value={field.value ?? ""}
+                          maxLength={MAX_TEXTO_CONDICIONES}
+                          rows={4}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Se imprime en la orden (carta). {(textoCondiciones ?? "").length}/{MAX_TEXTO_CONDICIONES}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="textoPieTal"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Pie de la orden</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          value={field.value ?? ""}
+                          maxLength={MAX_TEXTO_PIE_ORDEN}
+                          rows={2}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {(textoPieOrden ?? "").length}/{MAX_TEXTO_PIE_ORDEN}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="space-y-3">
+                  <FormField
+                    control={form.control}
+                    name="mostrarPreciosUnitariosTal"
+                    render={({ field }) => (
+                      <div className="flex items-center gap-2">
+                        <Switch id="mostrar-precios" checked={field.value} onCheckedChange={field.onChange} />
+                        <Label htmlFor="mostrar-precios">Mostrar precios unitarios</Label>
+                      </div>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="mostrarMecanicoTal"
+                    render={({ field }) => (
+                      <div className="flex items-center gap-2">
+                        <Switch id="mostrar-mecanico" checked={field.value} onCheckedChange={field.onChange} />
+                        <Label htmlFor="mostrar-mecanico">Mostrar mecánico</Label>
+                      </div>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="mostrarFirmaClienteTal"
+                    render={({ field }) => (
+                      <div className="flex items-center gap-2">
+                        <Switch id="mostrar-firma" checked={field.value} onCheckedChange={field.onChange} />
+                        <Label htmlFor="mostrar-firma">Espacio para firma del cliente</Label>
+                      </div>
+                    )}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <FormLabel>Vista previa</FormLabel>
+                <div className="mt-2">
+                  <VistaPreviaPdf control={form.control} />
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
