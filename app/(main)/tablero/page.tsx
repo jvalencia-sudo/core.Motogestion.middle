@@ -16,7 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import { TableroItem, TableroMecanico } from "@/lib/types/tablero";
 import { cn } from "@/lib/utils";
 
-import { cambiarEstadoOrden, getTablero } from "./actions";
+import { agregarNotaMecanico, cambiarEstadoOrden, getTablero } from "./actions";
+import { VistaMecanicoMovil } from "./vista-mecanico-movil";
 
 const TODOS = "todos";
 // Estados a los que un mecánico puede mover sus OT
@@ -111,6 +112,45 @@ export default function TableroPage() {
       }
       toast({ title: "No se pudo mover", description: res.error ?? "Intenta de nuevo." });
     }
+  }
+
+  async function cambiarEstadoMovil(consecutivoOt: number, codEstado: number) {
+    const previo = items.find((i) => i.consecutivoOt === consecutivoOt)?.codEstado ?? null;
+    setItems((arr) =>
+      arr.map((i) => (i.consecutivoOt === consecutivoOt ? { ...i, codEstado } : i)),
+    );
+    const res = await cambiarEstadoOrden(consecutivoOt, codEstado);
+    if (!res.ok) {
+      setItems((arr) =>
+        arr.map((i) => (i.consecutivoOt === consecutivoOt ? { ...i, codEstado: previo } : i)),
+      );
+      toast({ title: "No se pudo mover la orden", description: res.error ?? "Intenta de nuevo." });
+    }
+  }
+
+  // F1-08: un mecánico (sin ver_todo:tablero) ve una pantalla de una sola
+  // columna con botones grandes, pensada para celular -- el kanban de
+  // arrastrar y soltar no es usable con una mano en una pantalla chica.
+  if (!cargando && !esGestor) {
+    return (
+      // max-w-md: en landscape de celular o pantallas anchas, sin esto la
+      // columna se estira borde a borde y los botones grandes quedan con
+      // mucho espacio vacío alrededor del texto -- se ve "roto" aunque
+      // funcione igual. En retrato angosto (<448px) el max-width no pesa.
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 p-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold">Mis órdenes</h1>
+          <p className="text-sm text-muted-foreground">
+            Toca un botón para avisar que empezaste, que terminaste, o que necesitas un repuesto.
+          </p>
+        </div>
+        <VistaMecanicoMovil
+          items={items}
+          onCambiarEstado={cambiarEstadoMovil}
+          onNecesitoRepuesto={agregarNotaMecanico}
+        />
+      </div>
+    );
   }
 
   return (
