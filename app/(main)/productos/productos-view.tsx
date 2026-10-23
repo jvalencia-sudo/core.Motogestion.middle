@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   CirclePlusIcon,
   Loader2,
@@ -93,6 +94,7 @@ const MOV_COLUMNS: ColumnDef<MovimientoInventario>[] = [
 
 export default function ProductosView({ productos }: { productos: Producto[] }) {
   const { toast } = useToast();
+  const router = useRouter();
 
   // Datos de inventario (existencias + movimientos) — se cargan al abrir.
   const [stock, setStock] = React.useState<ProductoStock[]>([]);
@@ -136,6 +138,10 @@ export default function ProductosView({ productos }: { productos: Producto[] }) 
       setEntCant("");
       setEntMotivo("");
       cargarInventario();
+      // cargarInventario solo refresca la pestaña Entrada/Toma física (otro
+      // endpoint); el Catálogo usa el prop `productos` que viene del server
+      // component y no se entera del cambio sin esto.
+      router.refresh();
     } else {
       toast({ title: "No se pudo registrar", description: res.error ?? "Intenta de nuevo." });
     }
@@ -156,6 +162,7 @@ export default function ProductosView({ productos }: { productos: Producto[] }) 
       toast({ title: "Toma física aplicada", description: `${res.ajustados} producto(s) ajustado(s).` });
       setConteo({});
       cargarInventario();
+      router.refresh();
     } else {
       toast({ title: "No se pudo aplicar", description: res.error ?? "Intenta de nuevo." });
     }
