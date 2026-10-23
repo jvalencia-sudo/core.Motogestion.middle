@@ -1,5 +1,6 @@
 "use client";
 
+import { Building2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -22,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { tallerConfigSchema, TallerConfigFormData } from "@/lib/schemas/taller";
 import { TallerConfig } from "@/lib/types/taller";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -100,6 +102,18 @@ export default function ConfigForm({ config }: { config: TallerConfig }) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
+        <Tabs defaultValue="general">
+          <TabsList>
+            <TabsTrigger value="general">
+              <Building2 className="mr-1 size-4" /> General
+            </TabsTrigger>
+            <TabsTrigger value="pdf">
+              <FileText className="mr-1 size-4" /> Personalización de la orden
+            </TabsTrigger>
+          </TabsList>
+
+        {/* GENERAL */}
+        <TabsContent value="general" className="mt-4">
         <Card className="mb-4">
           <CardHeader>
             <CardTitle>Datos del taller</CardTitle>
@@ -246,13 +260,16 @@ export default function ConfigForm({ config }: { config: TallerConfig }) {
             />
           </CardContent>
         </Card>
+        </TabsContent>
 
+        {/* PERSONALIZACIÓN DE LA ORDEN (PDF) */}
+        <TabsContent value="pdf" className="mt-4">
         <Card className="mb-4">
           <CardHeader>
             <CardTitle>Personalización de la orden</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
               <div className="space-y-4">
                 <div>
                   <FormLabel>Logo</FormLabel>
@@ -392,7 +409,7 @@ export default function ConfigForm({ config }: { config: TallerConfig }) {
                     render={({ field }) => (
                       <div className="flex items-center gap-2">
                         <Switch id="mostrar-firma" checked={field.value} onCheckedChange={field.onChange} />
-                        <Label htmlFor="mostrar-firma">Espacio para firma del cliente</Label>
+                        <Label htmlFor="mostrar-firma">Mostrar firmas (cliente y taller)</Label>
                       </div>
                     )}
                   />
@@ -408,6 +425,8 @@ export default function ConfigForm({ config }: { config: TallerConfig }) {
             </div>
           </CardContent>
         </Card>
+        </TabsContent>
+        </Tabs>
 
         <div className="flex justify-end gap-2">
           <Button type="submit" disabled={loading}>

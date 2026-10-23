@@ -53,6 +53,11 @@ const formSchema = z.object({
   codMarcaMot: z
     .number()
     .min(1, "La marca es requerida"),
+  ciudadPlacaMot: z
+    .string()
+    .max(40, "La ciudad no puede exceder 40 caracteres")
+    .optional()
+    .or(z.literal("")),
 });
 
 interface MotoFormProps {
@@ -80,6 +85,7 @@ export default function MotoForm({
       cilindrajeMot: moto?.cilindrajeMot || 0,
       documentoCliMot: "",
       codMarcaMot: 0,
+      ciudadPlacaMot: moto?.ciudadPlacaMot || "",
     },
   });
 
@@ -93,6 +99,7 @@ export default function MotoForm({
         cilindrajeMot: moto.cilindrajeMot,
         documentoCliMot: "",
         codMarcaMot: 0,
+        ciudadPlacaMot: moto.ciudadPlacaMot || "",
       });
     }
   }, [moto, form, isEdit]);
@@ -109,6 +116,7 @@ export default function MotoForm({
             cilindrajeMot: values.cilindrajeMot,
             documentoCliMot: values.documentoCliMot,
             codMarcaMot: values.codMarcaMot,
+            ciudadPlacaMot: values.ciudadPlacaMot || undefined,
           })
         : await crearMoto(values as CreateMotoRequest);
 
@@ -316,6 +324,25 @@ export default function MotoForm({
                               )}
                             </SelectContent>
                           </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="col-span-6">
+                  <FormField
+                    control={form.control}
+                    name="ciudadPlacaMot"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ciudad de la placa (Opcional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Medellín"
+                            type="text"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

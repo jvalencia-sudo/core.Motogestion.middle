@@ -12,6 +12,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Cliente, CreateClienteRequest } from "@/lib/types/cliente";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
@@ -19,12 +26,20 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { crearCliente, editarCliente } from "./actions";
 
+const TIPOS_DOCUMENTO: { value: "CC" | "CE" | "NIT" | "PASAPORTE"; label: string }[] = [
+  { value: "CC", label: "Cédula de ciudadanía" },
+  { value: "CE", label: "Cédula de extranjería" },
+  { value: "NIT", label: "NIT" },
+  { value: "PASAPORTE", label: "Pasaporte" },
+];
+
 const formSchema = z.object({
   documentoCli: z
     .string()
     .min(8, "El documento debe tener al menos 8 caracteres")
     .max(11, "El documento no puede exceder 11 caracteres")
     .regex(/^\d+$/, "El documento debe contener solo números"),
+  tipoDocumentoCli: z.enum(["CC", "CE", "NIT", "PASAPORTE"]),
   nombreCli: z
     .string()
     .min(1, "El nombre es requerido")
@@ -70,6 +85,7 @@ export default function ClienteForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       documentoCli: cliente?.documentoCli || "",
+      tipoDocumentoCli: cliente?.tipoDocumentoCli || "CC",
       nombreCli: "",
       apellido1Cli: "",
       apellido2Cli: "",
@@ -88,6 +104,7 @@ export default function ClienteForm({
 
       form.reset({
         documentoCli: cliente.documentoCli,
+        tipoDocumentoCli: cliente.tipoDocumentoCli,
         nombreCli: nombre,
         apellido1Cli: apellido1,
         apellido2Cli: apellido2,
@@ -105,6 +122,7 @@ export default function ClienteForm({
     try {
       const resp = isEdit && cliente
         ? await editarCliente(cliente.documentoCli, {
+            tipoDocumentoCli: values.tipoDocumentoCli,
             nombreCli: values.nombreCli,
             apellido1Cli: values.apellido1Cli,
             apellido2Cli: values.apellido2Cli || undefined,
@@ -166,6 +184,32 @@ export default function ClienteForm({
                     />
                   </div>
                 )}
+                <div className="col-span-6">
+                  <FormField
+                    control={form.control}
+                    name="tipoDocumentoCli"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo de documento</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona el tipo" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {TIPOS_DOCUMENTO.map((t) => (
+                              <SelectItem key={t.value} value={t.value}>
+                                {t.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <div className="col-span-6">
                   <FormField
                     control={form.control}

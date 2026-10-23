@@ -86,16 +86,16 @@ export function VistaPreviaPdf({
   }, [JSON.stringify(valores), logoVersion]);
 
   return (
-    <div className="relative border rounded min-h-[500px] bg-muted/20">
+    <div className="relative border rounded min-h-[600px] bg-muted/20">
       {cargando && (
         <div className="absolute top-2 right-2">
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         </div>
       )}
       {pdfUrl ? (
-        <iframe title="Vista previa de la orden" src={pdfUrl} className="w-full h-[700px] rounded" />
+        <iframe title="Vista previa de la orden" src={pdfUrl} className="w-full h-[85vh] min-h-[600px] rounded" />
       ) : (
-        <div className="flex items-center justify-center h-[500px] text-sm text-muted-foreground">
+        <div className="flex items-center justify-center h-[600px] text-sm text-muted-foreground">
           Generando vista previa...
         </div>
       )}
