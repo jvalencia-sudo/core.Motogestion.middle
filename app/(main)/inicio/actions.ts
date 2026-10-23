@@ -16,6 +16,18 @@ export interface ResultadoBusquedaPlaca {
  * se normaliza también aquí para no depender de dos formatos distintos en
  * las dos llamadas.
  */
+/**
+ * F1-10: lista de motos del taller para el autocompletado del buscador de
+ * placa -- antes había que escribir la placa completa y dar Enter para que
+ * buscara algo; en celular (sin teclado físico, muchas veces con datos
+ * móviles lentos) eso se sentía roto. Se trae una sola vez al cargar la
+ * página y se filtra en el cliente mientras se escribe.
+ */
+export async function listarMotosParaBuscador(): Promise<Moto[]> {
+  const resp = await appFetch<Moto[]>("/api/motos");
+  return resp.data ?? [];
+}
+
 export async function buscarPorPlaca(
   placa: string
 ): Promise<ResultadoBusquedaPlaca | null> {
