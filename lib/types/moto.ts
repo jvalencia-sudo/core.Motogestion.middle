@@ -7,6 +7,7 @@ export interface Moto {
   modeloMot: number;
   colorMot: string;
   cilindrajeMot: number;
+  ciudadPlacaMot?: string | null;
   marca: string;
   propietario: string;
   telefonoCli: string;
@@ -20,6 +21,7 @@ export interface CreateMotoRequest {
   cilindrajeMot: number;
   documentoCliMot: string;
   codMarcaMot: number;
+  ciudadPlacaMot?: string;
 }
 
 export interface UpdateMotoRequest {
@@ -29,6 +31,7 @@ export interface UpdateMotoRequest {
   cilindrajeMot?: number;
   documentoCliMot?: string;
   codMarcaMot?: number;
+  ciudadPlacaMot?: string;
 }
 
 export interface MotoOperationResponse {
