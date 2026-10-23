@@ -7,11 +7,22 @@ import { TallerConfigFormData } from "@/lib/schemas/taller";
 
 const DEBOUNCE_MS = 600;
 
-export function VistaPreviaPdf({ control }: { control: Control<TallerConfigFormData> }) {
+export function VistaPreviaPdf({
+  control,
+  logoVersion = 0,
+}: {
+  control: Control<TallerConfigFormData>;
+  // El logo se sube aparte (no es un campo del form) y el backend de la
+  // vista previa lee el logo YA GUARDADO, no uno en el body -- por eso no
+  // basta con useWatch: hay que forzar el refetch subiendo este contador
+  // cada vez que LogoUploader confirma una subida.
+  logoVersion?: number;
+}) {
   const valores = useWatch({
     control,
     name: [
       "nombreComercialTal",
+      "whatsappTal",
       "colorPrincipalTal",
       "textoCondicionesTal",
       "textoPieTal",
@@ -35,6 +46,7 @@ export function VistaPreviaPdf({ control }: { control: Control<TallerConfigFormD
       try {
         const [
           nombreComercialTal,
+          whatsappTal,
           colorPrincipalTal,
           textoCondicionesTal,
           textoPieTal,
@@ -47,6 +59,7 @@ export function VistaPreviaPdf({ control }: { control: Control<TallerConfigFormD
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             nombreComercialTal,
+            whatsappTal,
             colorPrincipalTal,
             textoCondicionesTal,
             textoPieTal,
@@ -70,7 +83,7 @@ export function VistaPreviaPdf({ control }: { control: Control<TallerConfigFormD
     }, DEBOUNCE_MS);
     return () => clearTimeout(timerRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(valores)]);
+  }, [JSON.stringify(valores), logoVersion]);
 
   return (
     <div className="relative border rounded min-h-[500px] bg-muted/20">

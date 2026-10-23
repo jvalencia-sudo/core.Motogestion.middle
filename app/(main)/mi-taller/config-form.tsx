@@ -44,6 +44,7 @@ export default function ConfigForm({ config }: { config: TallerConfig }) {
   const [error, setError] = useState<string>();
   const [ok, setOk] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [logoVersion, setLogoVersion] = useState(0);
 
   const form = useForm<TallerConfigFormData>({
     resolver: zodResolver(tallerConfigSchema),
@@ -256,7 +257,10 @@ export default function ConfigForm({ config }: { config: TallerConfig }) {
                 <div>
                   <FormLabel>Logo</FormLabel>
                   <div className="mt-2">
-                    <LogoUploader tieneLogo={config.tieneLogo} />
+                    <LogoUploader
+                      tieneLogo={config.tieneLogo}
+                      onChange={() => setLogoVersion((v) => v + 1)}
+                    />
                   </div>
                 </div>
 
@@ -398,7 +402,7 @@ export default function ConfigForm({ config }: { config: TallerConfig }) {
               <div>
                 <FormLabel>Vista previa</FormLabel>
                 <div className="mt-2">
-                  <VistaPreviaPdf control={form.control} />
+                  <VistaPreviaPdf control={form.control} logoVersion={logoVersion} />
                 </div>
               </div>
             </div>
