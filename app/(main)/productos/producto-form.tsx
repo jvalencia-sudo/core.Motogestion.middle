@@ -76,6 +76,11 @@ export default function ProductoForm({
   const [componentesSeleccionados, setComponentesSeleccionados] = useState<
     ComponentePaquete[]
   >([]);
+  // Texto tal cual lo escribe el usuario para stockPro/stockProMin (soporta
+  // fracciones, ej. 1.5 litros). No se puede derivar del valor numérico del
+  // form en cada render porque se perdería un "1." a medio escribir.
+  const [stockProRaw, setStockProRaw] = useState(String(producto?.stockPro ?? 0));
+  const [stockProMinRaw, setStockProMinRaw] = useState(String(producto?.stockProMin ?? 0));
 
   const form = useForm<CreateProductoFormData>({
     resolver: zodResolver(isEdit ? updateProductoSchema : createProductoSchema),
@@ -99,6 +104,8 @@ export default function ProductoForm({
       }));
       setImpuestosSeleccionados(impuestosProducto);
       setComponentesSeleccionados(producto.componentes || []);
+      setStockProRaw(String(producto.stockPro ?? 0));
+      setStockProMinRaw(String(producto.stockProMin ?? 0));
 
       setTimeout(() => {
         form.reset({
@@ -180,17 +187,30 @@ export default function ProductoForm({
     form.setValue("precioPro", Number(valor));
   };
 
+  // stock_pro es numeric(12,3) en el backend (soporta fracciones, ej. 1.5
+  // litros de aceite) -- a diferencia de formatearPrecio, acá no se puede
+  // usar \D para limpiar el input porque borraría el punto decimal y
+  // convertiría "1.5" en "15". Deja dígitos y un solo punto, hasta 3
+  // decimales.
+  const limpiarDecimal = (valor: string): string => {
+    let limpio = valor.replace(/[^\d.]/g, "");
+    const puntoIdx = limpio.indexOf(".");
+    if (puntoIdx !== -1) {
+      limpio = limpio.slice(0, puntoIdx + 1) + limpio.slice(puntoIdx + 1).replace(/\./g, "");
+    }
+    const [entero, decimal] = limpio.split(".");
+    const enteroLimpio = entero.replace(/^0+(?=\d)/, "");
+    if (decimal === undefined) return enteroLimpio;
+    return `${enteroLimpio || "0"}.${decimal.slice(0, 3)}`;
+  };
+
   const handleStockChange = (fieldName: "stockPro" | "stockProMin") => (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const valor = e.target.value.replace(/\D/g, "");
-    form.setValue(fieldName, Number(valor));
-  };
-
-  const formatearNumero = (valor: string | number) => {
-    const soloNumeros = valor.toString().replace(/\D/g, "");
-    if (!soloNumeros) return "0";
-    return soloNumeros.replace(/^0+/, "") || "0";
+    const limpio = limpiarDecimal(e.target.value);
+    (fieldName === "stockPro" ? setStockProRaw : setStockProMinRaw)(limpio);
+    const numero = Number(limpio);
+    form.setValue(fieldName, Number.isNaN(numero) ? 0 : numero);
   };
 
   // Tipo actual (para condicionar stock y componentes)
@@ -409,7 +429,7 @@ export default function ProductoForm({
                               <Input
                                 placeholder="0"
                                 type="text"
-                                value={formatearNumero(field.value?.toString() || "0")}
+                                value={stockProRaw}
                                 onChange={handleStockChange("stockPro")}
                                 onBlur={field.onBlur}
                                 name={field.name}
@@ -433,7 +453,7 @@ export default function ProductoForm({
                               <Input
                                 placeholder="0"
                                 type="text"
-                                value={formatearNumero(field.value?.toString() || "0")}
+                                value={stockProMinRaw}
                                 onChange={handleStockChange("stockProMin")}
                                 onBlur={field.onBlur}
                                 name={field.name}
