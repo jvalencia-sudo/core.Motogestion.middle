@@ -23,3 +23,18 @@ export async function cambiarEstadoOrden(
   });
   return { ok: !error, error: error ?? undefined };
 }
+
+// F1-08: nota del mecánico (ej. "Necesito repuesto"). Se agrega a la
+// observación interna sin reemplazarla -- el backend conserva el trabajo
+// pedido original y le suma esta nota.
+export async function agregarNotaMecanico(
+  consecutivoOt: number,
+  nota: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const { error } = await appFetch(`/api/tablero/${consecutivoOt}/nota`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nota }),
+  });
+  return { ok: !error, error: error ?? undefined };
+}
