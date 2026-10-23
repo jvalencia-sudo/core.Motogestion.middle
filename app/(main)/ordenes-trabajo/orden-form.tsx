@@ -601,8 +601,8 @@ export default function OrdenForm({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-4 items-start">
-                <div className="flex-1">
+              <div className="flex flex-wrap gap-4 items-start">
+                <div className="flex-1 min-w-[200px]">
                   <label className="text-sm font-medium">Cliente *</label>
                   <Popover open={openClienteCombobox} onOpenChange={setOpenClienteCombobox}>
                     <PopoverTrigger asChild>
@@ -620,7 +620,7 @@ export default function OrdenForm({
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[400px] p-0">
+                    <PopoverContent className="w-[90vw] max-w-[400px] p-0">
                       <Command>
                         <CommandInput placeholder="Buscar cliente por nombre o documento..." />
                         <CommandList>
@@ -693,8 +693,8 @@ export default function OrdenForm({
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex gap-4 items-start">
-                  <div className="flex-1">
+                <div className="flex flex-wrap gap-4 items-start">
+                  <div className="flex-1 min-w-[200px]">
                     <FormField
                       control={form.control}
                       name="placaMotOt"
@@ -1096,7 +1096,7 @@ export default function OrdenForm({
                                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-[400px] p-0">
+                              <PopoverContent className="w-[90vw] max-w-[400px] p-0">
                                 <Command>
                                   <CommandInput placeholder="Buscar producto..." />
                                   <CommandList>

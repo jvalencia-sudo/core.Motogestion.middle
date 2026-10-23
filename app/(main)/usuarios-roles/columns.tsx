@@ -17,10 +17,13 @@ import Link from "next/link";
 import { desactivarUsuario, activarUsuario } from "./actions";
 import { useRouter } from "next/navigation";
 
+// F1-10: en celular solo quedan visibles Nombre, Rol, Estado y Acciones; el
+// resto se ve desde md: hacia arriba.
 export const columns: ColumnDef<VwUsuarioPerfil>[] = [
   {
     accessorKey: "documentoUsu",
     header: "Documento",
+    meta: { className: "hidden md:table-cell" },
   },
   {
     accessorKey: "nombreCompleto",
@@ -29,6 +32,7 @@ export const columns: ColumnDef<VwUsuarioPerfil>[] = [
   {
     accessorKey: "correoUsu",
     header: "Correo",
+    meta: { className: "hidden md:table-cell" },
   },
   {
     accessorKey: "rol",

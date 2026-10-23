@@ -15,6 +15,8 @@ import {
 import Link from "next/link";
 import { eliminarMoto } from "./actions";
 
+// F1-10: en celular solo quedan visibles Placa, Propietario y Acciones; el
+// resto se ve desde md: hacia arriba.
 export const columns: ColumnDef<Moto>[] = [
   {
     accessorKey: "placaMot",
@@ -23,18 +25,22 @@ export const columns: ColumnDef<Moto>[] = [
   {
     accessorKey: "marca",
     header: "Marca",
+    meta: { className: "hidden md:table-cell" },
   },
   {
     accessorKey: "modeloMot",
     header: "Modelo",
+    meta: { className: "hidden md:table-cell" },
   },
   {
     accessorKey: "colorMot",
     header: "Color",
+    meta: { className: "hidden md:table-cell" },
   },
   {
     accessorKey: "cilindrajeMot",
     header: "Cilindraje",
+    meta: { className: "hidden md:table-cell" },
   },
   {
     accessorKey: "propietario",
@@ -43,6 +49,7 @@ export const columns: ColumnDef<Moto>[] = [
   {
     accessorKey: "telefonoCli",
     header: "Teléfono",
+    meta: { className: "hidden md:table-cell" },
   },
   {
     id: "actions",

@@ -26,10 +26,14 @@ const formatearFecha = (fecha: string) => {
   }
 };
 
+// F1-10: en celular solo quedan visibles Placa, Cliente, Estado y Acciones
+// (las columnas que hacen falta para "buscar placa -> abrir la orden"
+// correcta sin scroll horizontal); el resto se ve desde md: hacia arriba.
 export const columns: ColumnDef<OrdenTrabajoResumen>[] = [
   {
     accessorKey: "consecutivoOt",
     header: "N° Orden",
+    meta: { className: "hidden md:table-cell" },
     cell: ({ row }) => {
       const consecutivo = row.original.consecutivoOt;
       return <span className="font-mono font-semibold">#{consecutivo}</span>;
@@ -38,6 +42,7 @@ export const columns: ColumnDef<OrdenTrabajoResumen>[] = [
   {
     accessorKey: "fechaElaboracionOt",
     header: "Fecha",
+    meta: { className: "hidden md:table-cell" },
     cell: ({ row }) => {
       const fecha = row.original.fechaElaboracionOt;
       return formatearFecha(fecha);
@@ -56,12 +61,13 @@ export const columns: ColumnDef<OrdenTrabajoResumen>[] = [
     header: "Cliente",
     cell: ({ row }) => {
       const nombre = row.original.nombreCompletoCliente;
-      return nombre || "-";
+      return <span className="line-clamp-1">{nombre || "-"}</span>;
     },
   },
   {
     accessorKey: "telefonoCli",
     header: "Teléfono",
+    meta: { className: "hidden md:table-cell" },
     cell: ({ row }) => {
       const telefono = row.original.telefonoCli;
       return telefono || "-";
@@ -70,6 +76,7 @@ export const columns: ColumnDef<OrdenTrabajoResumen>[] = [
   {
     accessorKey: "mecanico",
     header: "Mecánico",
+    meta: { className: "hidden md:table-cell" },
     cell: ({ row }) => {
       const mecanico = row.original.mecanico;
       return mecanico || "-";
@@ -99,6 +106,7 @@ export const columns: ColumnDef<OrdenTrabajoResumen>[] = [
   {
     accessorKey: "totalOt",
     header: "Total",
+    meta: { className: "hidden md:table-cell" },
     cell: ({ row }) => {
       // Usamos subtotalProductos si está disponible (incluye impuestos)
       // Si no, usamos totalOt como fallback
