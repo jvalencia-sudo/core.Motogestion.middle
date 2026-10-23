@@ -7,7 +7,13 @@ import { Loader2, Upload } from "lucide-react";
 const TIPOS_PERMITIDOS = ["image/png", "image/jpeg", "image/webp"];
 const MAX_BYTES = 2 * 1024 * 1024;
 
-export function LogoUploader({ tieneLogo }: { tieneLogo: boolean }) {
+export function LogoUploader({
+  tieneLogo,
+  onChange,
+}: {
+  tieneLogo: boolean;
+  onChange?: () => void;
+}) {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
@@ -57,6 +63,7 @@ export function LogoUploader({ tieneLogo }: { tieneLogo: boolean }) {
         return;
       }
       await cargarLogoActual();
+      onChange?.();
     } catch {
       setError("Ocurrió un error inesperado subiendo el logo.");
     } finally {
