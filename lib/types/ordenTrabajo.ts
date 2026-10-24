@@ -27,6 +27,9 @@ export interface DetalleOrdenTrabajoResponse {
   fechaConfirmacionDeto?: string;
   usuarioConfirmacion: string;
   estadoProducto: string;
+  // F2-02: retirar un ítem ya no lo borra -- lo marca con motivo.
+  retirado: boolean;
+  motivoRetiro?: string | null;
 }
 
 // Detalle para crear/agregar producto (Request)
@@ -47,6 +50,8 @@ export interface OrdenTrabajoResponse {
   observacionCliOt?: string;
   observacionOt?: string;
   fechaFinGarantiaOt?: string;
+  // F2-02: lo ve el cliente final en el link público -- separado de observacionOt.
+  diagnosticoOt?: string | null;
 
   // Anulación (F1-05)
   motivoAnulacionOt?: string | null;
@@ -86,6 +91,10 @@ export interface OrdenTrabajoResponse {
   // F1-07: pagado/saldo (excluye ítems no cobrados y pagos anulados)
   totalPagado?: number;
   saldoOt?: number;
+  // F2-01: token del link público de estado (se puede regenerar).
+  tokenPublico: string;
+  // F2-03: fecha/hora de la aprobación de cotización vigente, si existe.
+  aprobadoEn?: string | null;
 }
 
 // Resumen de orden para listados
@@ -152,6 +161,15 @@ export interface UpdateCantidadProductoRequest {
   motivoNoCobroDeto?: string;
 }
 
+// F2-02: retirar un ítem (reemplaza el antiguo DELETE físico) y diagnóstico.
+export interface RetirarProductoRequest {
+  motivo: string;
+}
+
+export interface GuardarDiagnosticoRequest {
+  texto: string;
+}
+
 // Response de operaciones
 export interface OrdenTrabajoOperationResponse {
   message: string;
@@ -203,4 +221,69 @@ export interface ClienteSelect {
   documentoCli: string;
   nombreCompleto: string;
   telefonoCli: string;
+}
+
+// ---- F2-01: link público de estado (sin login) ----
+
+export interface OrdenPublicaItem {
+  nombre: string;
+  tipo: "BIEN" | "SERVICIO" | "PAQUETE";
+  cantidad: number;
+  valorUnitario: number;
+  cobrado: boolean; // false = cortesía, se muestra tachada en $0
+  subtotal: number;
+  // F2-02: detalle opcional del producto, e ítems retirados -- no se
+  // tachan en la lista, se muestran aparte con su motivo.
+  detalle?: string | null;
+  retirado: boolean;
+  motivoRetiro?: string | null;
+}
+
+export interface OrdenPublicaTaller {
+  nombreComercial: string;
+  whatsapp?: string | null;
+  telefono?: string | null;
+  direccion?: string | null;
+  colorPrincipal: string;
+  logoDataUri?: string | null;
+  mostrarPieMotogestion: boolean;
+  nit?: string | null;
+  horario?: string | null;
+}
+
+// F2-02: un hito real (con hora) de la línea de tiempo. Ausente para pasos
+// de órdenes de antes de esta migración -- el front cae al comportamiento
+// anterior (sin hora, solo "Ahora" en el paso vigente) en ese caso.
+export interface PasoHistorial {
+  codOtEstOt: number;
+  ocurridoEn: string;
+}
+
+export interface OrdenPublica {
+  consecutivoOt: number;
+  placaMot: string;
+  ciudadPlacaMot?: string | null;
+  marcaMoto: string;
+  modeloMot: number;
+  kilometrajeIngresoOt: number;
+  mecanico?: string | null;
+  estadoOt: string;
+  codOtEstOt: number;
+  fechaElaboracionOt: string;
+  fechaEntregaOt?: string | null;
+  // null = el taller apagó el detalle público (mostrarDetallePublicoTal)
+  items: OrdenPublicaItem[] | null;
+  totalOt: number | null;
+  taller: OrdenPublicaTaller;
+  // F2-02: diagnóstico del mecánico, ausente si está vacío.
+  diagnostico?: string | null;
+  // F2-03: aprobación de cotización, opcional por taller.
+  esperandoAprobacion: boolean;
+  aprobadoEn?: string | null;
+  pasosHistorial: PasoHistorial[];
+}
+
+export interface AprobarCotizacionResponse {
+  aprobadoEn: string;
+  totalSnapshot: number;
 }

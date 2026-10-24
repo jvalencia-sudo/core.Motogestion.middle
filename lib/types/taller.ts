@@ -23,6 +23,13 @@ export interface TallerConfigEditable {
   mostrarPreciosUnitariosTal: boolean;
   mostrarMecanicoTal: boolean;
   mostrarFirmaClienteTal: boolean;
+  // F2-01: ¿se muestran ítems y total en el link público de estado?
+  mostrarDetallePublicoTal: boolean;
+  // F2-02: horario de atención, texto libre, visible en el link público.
+  horarioAtencionTal: string | null;
+  // F2-03: exigir aprobación del cliente antes de reparar (opcional, default
+  // apagado -- ningún taller pierde su flujo actual sin pedirlo).
+  exigirAprobacionCotizacionTal: boolean;
 }
 
 // Respuesta de GET/PUT /talleres/config: lo editable más nombre/NIT/correo de

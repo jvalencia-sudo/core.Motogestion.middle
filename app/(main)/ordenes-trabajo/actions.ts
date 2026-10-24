@@ -187,14 +187,37 @@ export async function agregarProductoOrden(
 }
 
 /**
- * Eliminar producto de orden de trabajo
+ * F2-02: retira un producto de una orden (reemplaza el antiguo DELETE
+ * físico) -- motivo obligatorio. El ítem queda visible, tachado, en vez de
+ * desaparecer.
  */
-export async function eliminarProductoOrden(
+export async function retirarProductoOrden(
   consecutivo: number,
-  codPro: number
+  codPro: number,
+  motivo: string
 ) {
-  const resp = await appFetch(`/api/ordenes-trabajo/${consecutivo}/productos/${codPro}`, {
-    method: "DELETE",
+  const resp = await appFetch(`/api/ordenes-trabajo/${consecutivo}/productos/${codPro}/retirar`, {
+    method: "PATCH",
+    body: JSON.stringify({ motivo }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  return resp;
+}
+
+/**
+ * F2-02: diagnóstico del mecánico -- lo ve el cliente final en el link
+ * público. Separado de la observación interna de la orden.
+ */
+export async function guardarDiagnosticoOrden(consecutivo: number, texto: string) {
+  const resp = await appFetch(`/api/ordenes-trabajo/${consecutivo}/diagnostico`, {
+    method: "PATCH",
+    body: JSON.stringify({ texto }),
+    headers: {
+      "Content-Type": "application/json",
+    },
   });
 
   return resp;
@@ -244,6 +267,17 @@ export async function anularOrdenTrabajo(consecutivo: number, motivo: string) {
   );
 
   return resp;
+}
+
+/**
+ * F2-01: regenera el link público de estado de la orden -- invalida el
+ * anterior de inmediato (deja de existir ninguna fila con ese UUID viejo).
+ */
+export async function regenerarTokenPublicoOrden(consecutivo: number) {
+  return appFetch<{ tokenPublico: string }>(
+    `/api/ordenes-trabajo/${consecutivo}/token-publico/regenerar`,
+    { method: "PATCH" }
+  );
 }
 
 /**

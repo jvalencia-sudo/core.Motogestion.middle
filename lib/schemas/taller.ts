@@ -20,6 +20,9 @@ export const tallerConfigSchema = z.object({
   mostrarPreciosUnitariosTal: z.boolean(),
   mostrarMecanicoTal: z.boolean(),
   mostrarFirmaClienteTal: z.boolean(),
+  mostrarDetallePublicoTal: z.boolean(),
+  horarioAtencionTal: z.string().max(300, "Máximo 300 caracteres").nullable(),
+  exigirAprobacionCotizacionTal: z.boolean(),
 });
 
 export type TallerConfigFormData = z.infer<typeof tallerConfigSchema>;
