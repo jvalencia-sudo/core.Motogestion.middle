@@ -56,6 +56,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // F2-01: link público de estado de una orden (sin login) -- la identidad la
+  // da el token UUID de la URL, no una sesión.
+  if (request.nextUrl.pathname.startsWith("/orden/")) {
+    return NextResponse.next();
+  }
+
   // Redirect to login if there is no session (volviendo luego a la ruta pedida)
   // En middleware hay que pasar el `request` explícito: la sobrecarga sin
   // argumentos usa next/headers internamente, que no es válido aquí (a

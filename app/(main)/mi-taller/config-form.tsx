@@ -64,6 +64,9 @@ export default function ConfigForm({ config }: { config: TallerConfig }) {
       mostrarPreciosUnitariosTal: config.mostrarPreciosUnitariosTal,
       mostrarMecanicoTal: config.mostrarMecanicoTal,
       mostrarFirmaClienteTal: config.mostrarFirmaClienteTal,
+      mostrarDetallePublicoTal: config.mostrarDetallePublicoTal,
+      horarioAtencionTal: config.horarioAtencionTal ?? "",
+      exigirAprobacionCotizacionTal: config.exigirAprobacionCotizacionTal,
     },
   });
 
@@ -166,6 +169,25 @@ export default function ConfigForm({ config }: { config: TallerConfig }) {
                   )}
                 />
               </div>
+
+              <FormField
+                control={form.control}
+                name="horarioAtencionTal"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Horario de atención</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        placeholder="Lun a sáb · 8:00 a. m. – 6:00 p. m."
+                      />
+                    </FormControl>
+                    <FormDescription>Se muestra en el link público de estado de la orden.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </CardContent>
         </Card>
@@ -410,6 +432,38 @@ export default function ConfigForm({ config }: { config: TallerConfig }) {
                       <div className="flex items-center gap-2">
                         <Switch id="mostrar-firma" checked={field.value} onCheckedChange={field.onChange} />
                         <Label htmlFor="mostrar-firma">Mostrar firmas (cliente y taller)</Label>
+                      </div>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="mostrarDetallePublicoTal"
+                    render={({ field }) => (
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          id="mostrar-detalle-publico"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                        <Label htmlFor="mostrar-detalle-publico">
+                          Mostrar ítems y total en el link público de estado
+                        </Label>
+                      </div>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="exigirAprobacionCotizacionTal"
+                    render={({ field }) => (
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          id="exigir-aprobacion"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                        <Label htmlFor="exigir-aprobacion">
+                          Exigir aprobación del cliente antes de reparar
+                        </Label>
                       </div>
                     )}
                   />

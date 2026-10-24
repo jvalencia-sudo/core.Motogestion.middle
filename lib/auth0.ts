@@ -21,5 +21,8 @@ export const auth0 = new Auth0Client({
   authorizationParameters: {
     scope: process.env.AUTH0_SCOPE,
     audience: process.env.AUTH0_AUDIENCE,
+    // Fuerza español en Universal Login sin depender del idioma del
+    // navegador ni del locale por defecto del tenant de Auth0.
+    ui_locales: "es",
   },
 });

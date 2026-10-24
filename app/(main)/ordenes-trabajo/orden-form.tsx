@@ -31,6 +31,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -57,7 +65,8 @@ import {
   obtenerUsuarioActual,
   actualizarCantidadProducto,
   agregarProductoOrden,
-  eliminarProductoOrden
+  retirarProductoOrden,
+  guardarDiagnosticoOrden
 } from "./actions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -105,6 +114,17 @@ export default function OrdenForm({
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [detalles, setDetalles] = useState<DetalleFormRow[]>([]);
+  // F2-02: retirar un ítem ya guardado se confirma de inmediato (motivo
+  // obligatorio), no se difiere al guardar el formulario -- igual criterio
+  // que "Anular Orden".
+  const [retiroPendiente, setRetiroPendiente] = useState<{ id: string; codPro: number; nombre: string } | null>(null);
+  const [motivoRetiro, setMotivoRetiro] = useState("");
+  const [retirando, setRetirando] = useState(false);
+  const [errorRetiro, setErrorRetiro] = useState<string>();
+  // F2-02: diagnóstico que ve el cliente final -- separado de observacionOt
+  // (interno), por eso no vive en el schema de react-hook-form ni se manda
+  // en el PUT general; se guarda contra su propio endpoint.
+  const [diagnosticoOt, setDiagnosticoOt] = useState(orden?.diagnosticoOt ?? "");
 
   // Obtener fecha actual en formato local (useMemo para calcularlo una sola vez)
   const fechaHoy = useMemo(() => {
@@ -308,13 +328,39 @@ export default function OrdenForm({
       estadoProducto: "Pendiente",
       cobrarDeto: true, // Por defecto, los productos se cobran
       motivoNoCobroDeto: undefined,
+      retirado: false,
     };
     setDetalles([...detalles, nuevoDetalle]);
   };
 
   const eliminarDetalle = (id: string) => {
+    // F2-02: un ítem ya guardado en el backend ("existing-...") se retira
+    // con motivo obligatorio -- se pide confirmación antes de quitarlo. Un
+    // ítem nuevo sin guardar todavía se quita directo, no hay nada que
+    // retirar en el servidor.
+    const fila = detalles.find((d) => d.id === id);
+    if (fila && id.startsWith("existing-")) {
+      setRetiroPendiente({ id, codPro: fila.codProDeto, nombre: fila.nombrePro });
+      setMotivoRetiro("");
+      setErrorRetiro(undefined);
+      return;
+    }
     setDetalles(detalles.filter((d) => d.id !== id));
   };
+
+  async function confirmarRetiro() {
+    if (!retiroPendiente || !orden) return;
+    setRetirando(true);
+    setErrorRetiro(undefined);
+    const resp = await retirarProductoOrden(orden.consecutivoOt, retiroPendiente.codPro, motivoRetiro);
+    setRetirando(false);
+    if (resp?.error) {
+      setErrorRetiro(resp.error);
+      return;
+    }
+    setDetalles((prev) => prev.filter((d) => d.id !== retiroPendiente.id));
+    setRetiroPendiente(null);
+  }
 
   const actualizarDetalle = (
     id: string,
@@ -469,26 +515,22 @@ export default function OrdenForm({
           return;
         }
 
-        // 2. Gestionar cambios en productos/servicios
-        const detallesOriginales = orden.detalles || [];
-        const detallesActuales = detalles;
-
-        // 2.1 Detectar productos eliminados
-        for (const original of detallesOriginales) {
-          const existe = detallesActuales.find(d => d.codProDeto === original.codProDeto);
-
-          if (!existe) {
-            const respEliminar = await eliminarProductoOrden(orden.consecutivoOt, original.codProDeto);
-
-            if (respEliminar?.error) {
-              setError(`Error al eliminar producto ${original.nombrePro}: ${respEliminar.error}`);
-              setLoading(false);
-              return;
-            }
+        // F2-02: diagnóstico (lo ve el cliente final), si cambió.
+        if ((diagnosticoOt ?? "") !== (orden.diagnosticoOt ?? "")) {
+          const respDiagnostico = await guardarDiagnosticoOrden(orden.consecutivoOt, diagnosticoOt ?? "");
+          if (respDiagnostico?.error) {
+            setError(respDiagnostico.error);
+            setLoading(false);
+            return;
           }
         }
 
-        // 2.2 Detectar productos modificados y nuevos
+        // 2. Gestionar cambios en productos/servicios. Los retiros (F2-02) ya
+        // se confirmaron de inmediato con su motivo -- ver confirmarRetiro().
+        const detallesOriginales = orden.detalles || [];
+        const detallesActuales = detalles;
+
+        // 2.1 Detectar productos modificados y nuevos
         for (const actual of detallesActuales) {
           const original = detallesOriginales.find(d => d.codProDeto === actual.codProDeto);
 
@@ -987,7 +1029,7 @@ export default function OrdenForm({
                       <FormLabel>Observaciones del Taller</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Diagnóstico, trabajos realizados, recomendaciones..."
+                          placeholder="Notas internas: trabajos realizados, recomendaciones... (el cliente NO ve esto)"
                           rows={4}
                           {...field}
                         />
@@ -996,6 +1038,19 @@ export default function OrdenForm({
                     </FormItem>
                   )}
                 />
+                {isEdit && (
+                  <div className="mt-4">
+                    <Label htmlFor="diagnostico-ot">Diagnóstico (lo ve el cliente)</Label>
+                    <Textarea
+                      id="diagnostico-ot"
+                      value={diagnosticoOt ?? ""}
+                      onChange={(e) => setDiagnosticoOt(e.target.value)}
+                      placeholder="Lo que el cliente va a leer en el link público de estado"
+                      rows={4}
+                      className="mt-2"
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -1419,6 +1474,43 @@ export default function OrdenForm({
         documentoCli={clienteSeleccionado}
         marcas={marcas}
       />
+
+      {/* F2-02: retirar un ítem ya guardado exige motivo */}
+      <Dialog open={retiroPendiente !== null} onOpenChange={(open) => !open && setRetiroPendiente(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Retirar {retiroPendiente?.nombre}</DialogTitle>
+            <DialogDescription>
+              El ítem queda visible (tachado) en la orden y en el link público del
+              cliente, con el motivo que escribas acá. Se devuelve el stock si aplica.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3">
+            <div>
+              <Label htmlFor="motivo-retiro">Motivo</Label>
+              <Textarea
+                id="motivo-retiro"
+                value={motivoRetiro}
+                onChange={(e) => setMotivoRetiro(e.target.value)}
+                placeholder="Por qué se retira este ítem"
+              />
+            </div>
+            {errorRetiro && <p className="text-sm text-destructive">{errorRetiro}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRetiroPendiente(null)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmarRetiro}
+              disabled={retirando || motivoRetiro.trim().length === 0}
+            >
+              {retirando ? "Retirando..." : "Confirmar retiro"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { obtenerOrdenTrabajo } from "../actions";
 import { getEsAdmin, getPermissions } from "../../actions";
+import { obtenerConfigTaller } from "../../mi-taller/actions";
 import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,7 @@ import { GenerarPdfButton } from "./generar-pdf-button";
 import { AnularOrdenDialog } from "./anular-orden-dialog";
 import { HistorialOrden } from "./historial-orden";
 import { PagosOrden } from "./pagos-orden";
+import { LinkPublicoDialog } from "./link-publico-dialog";
 
 interface VerOrdenPageProps {
   searchParams: Promise<{ consecutivo?: string }>;
@@ -32,9 +34,20 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
     notFound();
   }
 
-  const [permissions, esAdmin] = await Promise.all([getPermissions(), getEsAdmin()]);
+  const [permissions, esAdmin, config] = await Promise.all([
+    getPermissions(),
+    getEsAdmin(),
+    obtenerConfigTaller(),
+  ]);
   const ESTADO_ANULADA = 5;
   const estaAnulada = orden.codOtEstOt === ESTADO_ANULADA;
+  const ESTADO_EN_PROCESO = 2;
+  // F2-03: solo tiene sentido mostrar el indicador si el taller exige
+  // aprobación Y la orden está en el estado donde aplica (ver
+  // OrdenAprobacionServicio -- mismo criterio del backend).
+  const exigeAprobacion = Boolean(config?.exigirAprobacionCotizacionTal);
+  const mostrarAprobacion =
+    exigeAprobacion && orden.codOtEstOt === ESTADO_EN_PROCESO && !estaAnulada;
   const puedeAnular = permissions.includes("anular:ordenes-trabajo") && !estaAnulada;
   const puedeVerPagos = permissions.includes("ver:pagos-orden");
   const puedeRegistrarPago = permissions.includes("crear_editar:pagos-orden");
@@ -95,6 +108,7 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
             />
           )}
           {puedeAnular && <AnularOrdenDialog consecutivo={orden.consecutivoOt} />}
+          <LinkPublicoDialog consecutivo={orden.consecutivoOt} tokenPublico={orden.tokenPublico} />
         </div>
 
         {estaAnulada && (
@@ -141,6 +155,13 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
                 >
                   {orden.estadoOt || "Desconocido"}
                 </Badge>
+                {mostrarAprobacion && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {orden.aprobadoEn
+                      ? `Cliente aprobó la cotización el ${formatearFecha(orden.aprobadoEn)}`
+                      : "Esperando aprobación del cliente"}
+                  </p>
+                )}
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
@@ -300,10 +321,18 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                Observación del Taller
+                Observación del Taller (interna, el cliente no la ve)
               </p>
               <p className="text-base mt-1">
                 {orden.observacionOt || "Sin observaciones"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Diagnóstico (lo ve el cliente en el link público)
+              </p>
+              <p className="text-base mt-1">
+                {orden.diagnosticoOt || "Sin diagnóstico"}
               </p>
             </div>
           </CardContent>
@@ -317,7 +346,9 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
           <CardContent>
             {orden.detalles && orden.detalles.length > 0 ? (
               <div className="space-y-3">
-                {orden.detalles.map((detalle, index) => (
+                {orden.detalles
+                  .filter((detalle) => !detalle.retirado)
+                  .map((detalle, index) => (
                   <div
                     key={index}
                     className="flex justify-between items-start p-3 border rounded-lg"
@@ -352,19 +383,44 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
                   </div>
                 ))}
 
+                {/* F2-02: ítems retirados -- no desaparecen, quedan tachados con motivo */}
+                {orden.detalles.some((d) => d.retirado) && (
+                  <div className="space-y-2 pt-2">
+                    {orden.detalles
+                      .filter((detalle) => detalle.retirado)
+                      .map((detalle, index) => (
+                        <div
+                          key={`retirado-${index}`}
+                          className="flex justify-between items-start p-3 border border-dashed rounded-lg bg-muted/40"
+                        >
+                          <div className="flex-1">
+                            <p className="font-medium text-muted-foreground line-through">
+                              {detalle.nombrePro}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Retirado: {detalle.motivoRetiro || "Sin motivo registrado"}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+
                 <div className="pt-4 border-t space-y-3">
-                  {/* Subtotal (todos los productos) */}
+                  {/* Subtotal (solo productos activos, no retirados) */}
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-muted-foreground">Subtotal:</span>
                     <span className="text-lg font-semibold">
                       {formatearMoneda(
-                        orden.detalles.reduce((sum, det) => sum + (det.cantidadDeto * det.valorUnitarioDeto), 0)
+                        orden.detalles
+                          .filter((d) => !d.retirado)
+                          .reduce((sum, det) => sum + (det.cantidadDeto * det.valorUnitarioDeto), 0)
                       )}
                     </span>
                   </div>
 
                   {/* Mostrar productos no cobrados si existen */}
-                  {orden.detalles.some(d => d.cobrarDeto === false) && (
+                  {orden.detalles.some(d => d.cobrarDeto === false && !d.retirado) && (
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-muted-foreground">
                         Productos sin costo:
@@ -372,7 +428,7 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
                       <span className="text-green-600 font-medium">
                         -{formatearMoneda(
                           orden.detalles
-                            .filter(d => d.cobrarDeto === false)
+                            .filter(d => d.cobrarDeto === false && !d.retirado)
                             .reduce((sum, det) => sum + (det.cantidadDeto * det.valorUnitarioDeto), 0)
                         )}
                       </span>
