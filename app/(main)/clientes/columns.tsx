@@ -15,6 +15,8 @@ import {
 import Link from "next/link";
 import { eliminarCliente } from "./actions";
 
+// F1-10: en celular solo quedan visibles Nombre, Documento y Acciones; el
+// resto se ve desde md: hacia arriba.
 export const columns: ColumnDef<Cliente>[] = [
   {
     accessorKey: "documentoCli",
@@ -27,18 +29,22 @@ export const columns: ColumnDef<Cliente>[] = [
   {
     accessorKey: "correoCli",
     header: "Correo",
+    meta: { className: "hidden md:table-cell" },
   },
   {
     accessorKey: "telefonoCli",
     header: "Teléfono",
+    meta: { className: "hidden md:table-cell" },
   },
   {
     accessorKey: "direccionCli",
     header: "Dirección",
+    meta: { className: "hidden md:table-cell" },
   },
   {
     accessorKey: "totalMotos",
     header: "Motos",
+    meta: { className: "hidden md:table-cell" },
   },
   {
     id: "actions",

@@ -17,10 +17,13 @@ const getGarantiaVariant = (estado: string) => {
   }
 };
 
+// F1-10: en celular solo quedan visibles Placa, Cliente, Garantía y
+// Acciones; el resto se ve desde md: hacia arriba.
 export const columns: ColumnDef<ReclamoResumen>[] = [
   {
     accessorKey: "codRec",
     header: "ID",
+    meta: { className: "hidden md:table-cell" },
     cell: ({ row }) => {
       const id = row.original.codRec;
       return <span className="font-mono font-semibold">#{id}</span>;
@@ -29,6 +32,7 @@ export const columns: ColumnDef<ReclamoResumen>[] = [
   {
     accessorKey: "descripcionRec",
     header: "Descripción",
+    meta: { className: "hidden md:table-cell" },
     cell: ({ row }) => {
       const descripcion = row.original.descripcionRec;
       return (
@@ -41,6 +45,7 @@ export const columns: ColumnDef<ReclamoResumen>[] = [
   {
     accessorKey: "consecutivoOtRec",
     header: "N° Orden",
+    meta: { className: "hidden md:table-cell" },
     cell: ({ row }) => {
       const consecutivo = row.original.consecutivoOtRec;
       return (
@@ -73,6 +78,7 @@ export const columns: ColumnDef<ReclamoResumen>[] = [
   {
     accessorKey: "telefonoCli",
     header: "Teléfono",
+    meta: { className: "hidden md:table-cell" },
     cell: ({ row }) => {
       const telefono = row.original.telefonoCli;
       return <span className="font-mono">{telefono || "-"}</span>;

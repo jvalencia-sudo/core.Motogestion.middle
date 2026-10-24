@@ -15,10 +15,13 @@ const calcularPrecioConImpuestos = (producto: Producto): number => {
   return subtotal + totalImpuestos;
 };
 
+// F1-10: en celular solo quedan visibles Nombre, Stock, Tipo y Acciones; el
+// resto se ve desde md: hacia arriba.
 export const columns: ColumnDef<Producto>[] = [
   {
     accessorKey: "codPro",
     header: "Código",
+    meta: { className: "hidden md:table-cell" },
   },
   {
     accessorKey: "nombrePro",
@@ -27,6 +30,7 @@ export const columns: ColumnDef<Producto>[] = [
   {
     accessorKey: "descripcionPro",
     header: "Descripción",
+    meta: { className: "hidden md:table-cell" },
     cell: ({ row }) => {
       const descripcion = row.original.descripcionPro;
       return descripcion || "-";
@@ -35,6 +39,7 @@ export const columns: ColumnDef<Producto>[] = [
   {
     accessorKey: "precioPro",
     header: "Precio Base",
+    meta: { className: "hidden md:table-cell" },
     cell: ({ row }) => {
       const precio = row.original.precioPro;
       return new Intl.NumberFormat("es-CO", {
@@ -47,6 +52,7 @@ export const columns: ColumnDef<Producto>[] = [
   {
     id: "precio_con_impuestos",
     header: "Precio + Impuestos",
+    meta: { className: "hidden md:table-cell" },
     cell: ({ row }) => {
       const producto = row.original;
       const precioFinal = calcularPrecioConImpuestos(producto);
@@ -60,6 +66,7 @@ export const columns: ColumnDef<Producto>[] = [
   {
     id: "impuestos",
     header: "Impuestos",
+    meta: { className: "hidden md:table-cell" },
     cell: ({ row }) => <ImpuestosCell impuestos={row.original.impuestos} />,
   },
   {
@@ -93,6 +100,7 @@ export const columns: ColumnDef<Producto>[] = [
   {
     accessorKey: "estadoProducto",
     header: "Estado",
+    meta: { className: "hidden md:table-cell" },
     cell: ({ row }) => {
       const estado = row.original.estadoProducto;
       return (

@@ -71,7 +71,7 @@ export default async function VerOrdenPage({ searchParams }: VerOrdenPageProps) 
 
       <div className="space-y-4">
         {/* Botones de acción */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link href="/ordenes-trabajo">
             <Button variant="outline">
               <ArrowLeft className="mr-2 h-4 w-4" />

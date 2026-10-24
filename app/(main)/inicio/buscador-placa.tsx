@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Search, Phone, Bike, UserPlus, Loader2 } from "lucide-react";
 
@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { normalizarPlaca } from "@/lib/utils/placa";
+import { Moto } from "@/lib/types/moto";
 import { OrdenTrabajoResumen } from "@/lib/types/ordenTrabajo";
 
-import { buscarPorPlaca, ResultadoBusquedaPlaca } from "./actions";
+import { buscarPorPlaca, listarMotosParaBuscador, ResultadoBusquedaPlaca } from "./actions";
 
 // Estados en los que una orden sigue "abierta" (coincide con el seed de ot_estados).
 const ESTADOS_ABIERTOS = ["Pendiente", "En Proceso", "Garantía"];
@@ -57,22 +58,61 @@ function FilaHistorial({ orden }: { orden: OrdenTrabajoResumen }) {
   );
 }
 
+const MIN_CARACTERES_SUGERENCIA = 2;
+const MAX_SUGERENCIAS = 6;
+
 export function BuscadorPlaca() {
   const [valor, setValor] = useState("");
   const [loading, setLoading] = useState(false);
   const [buscado, setBuscado] = useState(false);
   const [resultado, setResultado] = useState<ResultadoBusquedaPlaca | null>(null);
+  // F1-10: antes solo se podía buscar escribiendo la placa completa y dando
+  // Enter -- en celular se sentía como que "no funcionaba". Se trae la lista
+  // de motos del taller una vez y se sugiere mientras se escribe.
+  const [motos, setMotos] = useState<Moto[]>([]);
+  const [sugerenciasAbiertas, setSugerenciasAbiertas] = useState(false);
+  const contenedorRef = useRef<HTMLDivElement>(null);
 
-  async function buscar(e: React.FormEvent) {
-    e.preventDefault();
-    const placa = normalizarPlaca(valor);
+  useEffect(() => {
+    listarMotosParaBuscador().then(setMotos);
+  }, []);
+
+  useEffect(() => {
+    function alTocarFuera(e: MouseEvent) {
+      if (contenedorRef.current && !contenedorRef.current.contains(e.target as Node)) {
+        setSugerenciasAbiertas(false);
+      }
+    }
+    document.addEventListener("mousedown", alTocarFuera);
+    return () => document.removeEventListener("mousedown", alTocarFuera);
+  }, []);
+
+  const sugerencias = useMemo(() => {
+    if (valor.length < MIN_CARACTERES_SUGERENCIA) return [];
+    return motos
+      .filter(
+        (moto) =>
+          moto.placaMot.includes(valor) ||
+          moto.propietario?.toUpperCase().includes(valor)
+      )
+      .slice(0, MAX_SUGERENCIAS);
+  }, [valor, motos]);
+
+  async function ejecutarBusqueda(placaCandidata: string) {
+    const placa = normalizarPlaca(placaCandidata);
     if (!placa) return;
 
+    setSugerenciasAbiertas(false);
     setLoading(true);
     const data = await buscarPorPlaca(placa);
     setResultado(data);
     setBuscado(true);
     setLoading(false);
+  }
+
+  async function buscar(e: React.FormEvent) {
+    e.preventDefault();
+    await ejecutarBusqueda(valor);
   }
 
   const ordenAbierta = resultado?.historial.find((o) =>
@@ -83,23 +123,53 @@ export function BuscadorPlaca() {
     <div className="flex flex-col gap-4">
       <Card>
         <CardContent className="pt-6">
-          <form onSubmit={buscar} className="flex gap-2">
-            <Input
-              value={valor}
-              onChange={(e) => setValor(normalizarPlaca(e.target.value))}
-              placeholder="Buscar por placa (ej: ABC123)"
-              maxLength={6}
-              autoFocus
-              className="h-14 text-2xl font-semibold tracking-wider"
-            />
-            <Button type="submit" disabled={loading || !valor} className="h-14 px-6">
-              {loading ? (
-                <Loader2 className="size-5 animate-spin" />
-              ) : (
-                <Search className="size-5" />
-              )}
-            </Button>
-          </form>
+          <div ref={contenedorRef} className="relative">
+            <form onSubmit={buscar} className="flex gap-2">
+              <Input
+                value={valor}
+                onChange={(e) => {
+                  setValor(normalizarPlaca(e.target.value));
+                  setSugerenciasAbiertas(true);
+                }}
+                onFocus={() => setSugerenciasAbiertas(true)}
+                placeholder="Buscar por placa (ej: ABC123)"
+                maxLength={6}
+                autoComplete="off"
+                autoFocus
+                className="h-14 text-2xl font-semibold tracking-wider"
+              />
+              <Button type="submit" disabled={loading || !valor} className="h-14 px-6">
+                {loading ? (
+                  <Loader2 className="size-5 animate-spin" />
+                ) : (
+                  <Search className="size-5" />
+                )}
+              </Button>
+            </form>
+
+            {sugerenciasAbiertas && sugerencias.length > 0 && (
+              <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-md border bg-popover shadow-md">
+                {sugerencias.map((moto) => (
+                  <button
+                    key={moto.placaMot}
+                    type="button"
+                    onClick={() => {
+                      setValor(moto.placaMot);
+                      ejecutarBusqueda(moto.placaMot);
+                    }}
+                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-accent active:bg-accent"
+                  >
+                    <span className="font-mono font-semibold tracking-wider">
+                      {moto.placaMot}
+                    </span>
+                    <span className="truncate text-sm text-muted-foreground">
+                      {moto.marca} · {moto.propietario}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 

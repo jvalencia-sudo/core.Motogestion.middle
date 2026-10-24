@@ -25,6 +25,19 @@ import {
 import { rankItem } from "@tanstack/match-sorter-utils";
 import { useState } from "react";
 import { ArrowDown, ArrowUp, ChevronsUpDown, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// F1-10: permite que una columna se oculte en pantallas angostas (celular)
+// sin perder sus datos -- solo se ve desde el breakpoint que indique
+// `className` (ej. "hidden md:table-cell"). La columna/acción principal de
+// cada tabla no debe usar esto, para que nunca haga falta scroll horizontal
+// para llegar a ella.
+declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData, TValue> {
+    className?: string;
+  }
+}
 import { DataTablePagination } from "./data-table-pagination";
 import { DataTableViewOptions } from "./data-table-view-options";
 import { type Table as TanstackTable } from "@tanstack/react-table";
@@ -71,7 +84,7 @@ function renderTable<TData>(
               const puedeOrdenar = header.column.getCanSort();
               const orden = header.column.getIsSorted();
               return (
-                <TableHead key={header.id}>
+                <TableHead key={header.id} className={cn(header.column.columnDef.meta?.className)}>
                   {puedeOrdenar ? (
                     <button
                       type="button"
@@ -102,7 +115,10 @@ function renderTable<TData>(
           table.getRowModel().rows.map((row) => (
             <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
               {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id} className="py-1 px-2">
+                <TableCell
+                  key={cell.id}
+                  className={cn("py-1 px-2", cell.column.columnDef.meta?.className)}
+                >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>
               ))}
@@ -185,8 +201,8 @@ export function DataTable<TData, TValue>({
   ) : (
     <Card className="w-full">
       <CardContent>
-        <div className="flex items-center justify-between gap-4 py-4">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-4 py-4">
+          <div className="flex flex-wrap items-center gap-2">
             <Input
               placeholder="Buscar..."
               value={globalFilter ?? ""}
@@ -204,7 +220,7 @@ export function DataTable<TData, TValue>({
               </Button>
             )}
           </div>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             {extraActions}
             <DataTableViewOptions table={table} />
           </div>
